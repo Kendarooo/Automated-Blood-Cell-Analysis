@@ -1,0 +1,15 @@
+torch
+torchvision
+scikit-learn
+numpy
+pandas
+matplotlib
+opencv-python
+pillow
+pyyaml
+pytest
+ruff
+wandb
+ultralytics
+scipy
+joblib

@@ -1,0 +1,50 @@
+seed: 42
+
+paths:
+  data_root: "data"
+  bccd_root: "data/bccd"
+  synthetic_root: "data/synthetic_test"
+  outputs_root: "outputs"
+  checkpoints_root: "outputs/checkpoints"
+  features_root: "outputs/features"
+
+dataset:
+  image_size: 224
+  num_classes: 3
+  class_names: ["Platelets", "RBC", "WBC"]
+
+augmentation:
+  enabled: true
+  rotation_deg: 10
+  translate: 0.05
+  scale_min: 0.95
+  scale_max: 1.05
+  brightness: 0.15
+  contrast: 0.15
+  hue: 0.03
+  noise_std: 0.01
+
+feature_extractor:
+  backbone: "resnet18"
+  truncate_at: "layer3"
+  freeze: true
+  projection_dim: 128
+
+normalization:
+  enabled: true
+
+ann:
+  hidden_dims: [128, 64]
+  dropout: 0.3
+  lr: 0.001
+  batch_size: 32
+  epochs: 20
+  weight_decay: 0.0001
+
+svm:
+  kernel: "rbf"
+  C: 1.0
+  gamma: "scale"
+
+inference:
+  alpha: 0.05
