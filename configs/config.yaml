@@ -1,50 +1,33 @@
+wandb:
+  project: "bccd-hemograma"
+  entity: null          # Tu usuario o equipo en W&B. null = cuenta personal.
+  run_name: "yolo-finetune-v1"
+
+detection:
+  # Pesos de inicio para fine-tuning (YOLO12s preentrenado en COCO).
+  weights: "yolo12s.pt"
+
+  # Ruta al data.yaml generado por Roboflow para BCCD.
+  data_yaml: "data/BCCD/data.yaml"
+
+  # Pesos del mejor modelo tras el entrenamiento (para inferencia).
+  best_weights: "outputs/yolo_finetune/weights/best.pt"
+
+  # Directorio donde YOLO guarda experimentos.
+  output_dir: "outputs"
+
+  # Hiperparámetros de entrenamiento.
+  epochs: 50
+  imgsz: 640
+  batch: 16
+  lr0: 0.01
+
+  # Hiperparámetros de inferencia.
+  conf_threshold: 0.25
+  iou_threshold: 0.45
+
+  # Tamaño uniforme de cada recorte celular (requerido por NFR-6a).
+  crop_width: 224
+  crop_height: 224
+
 seed: 42
-
-paths:
-  data_root: "data"
-  bccd_root: "data/bccd"
-  synthetic_root: "data/synthetic_test"
-  outputs_root: "outputs"
-  checkpoints_root: "outputs/checkpoints"
-  features_root: "outputs/features"
-
-dataset:
-  image_size: 224
-  num_classes: 3
-  class_names: ["Platelets", "RBC", "WBC"]
-
-augmentation:
-  enabled: true
-  rotation_deg: 10
-  translate: 0.05
-  scale_min: 0.95
-  scale_max: 1.05
-  brightness: 0.15
-  contrast: 0.15
-  hue: 0.03
-  noise_std: 0.01
-
-feature_extractor:
-  backbone: "resnet18"
-  truncate_at: "layer3"
-  freeze: true
-  projection_dim: 128
-
-normalization:
-  enabled: true
-
-ann:
-  hidden_dims: [128, 64]
-  dropout: 0.3
-  lr: 0.001
-  batch_size: 32
-  epochs: 20
-  weight_decay: 0.0001
-
-svm:
-  kernel: "rbf"
-  C: 1.0
-  gamma: "scale"
-
-inference:
-  alpha: 0.05
