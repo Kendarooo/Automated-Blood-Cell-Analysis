@@ -1,3 +1,4 @@
+"""YOLO inference and bounding-box cell cropping for the BCCD pipeline."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -7,9 +8,6 @@ from typing import Any
 import numpy as np
 from PIL import Image
 from ultralytics import YOLO
-
-from src.utils.config import load_config
-
 
 # ---------------------------------------------------------------------------
 # Value objects  (no logic, just structured data)
@@ -73,7 +71,7 @@ class CellCropper:
             Cropped and resized PIL image.
         """
         region = image.crop((box.x1, box.y1, box.x2, box.y2))
-        return region.resize(self._target_size, Image.BILINEAR)
+        return region.resize(self._target_size, Image.Resampling.LANCZOS)
 
     def crop_all(
         self, image: Image.Image, boxes: list[BoundingBox]
