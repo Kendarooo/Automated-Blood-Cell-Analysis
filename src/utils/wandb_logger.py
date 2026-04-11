@@ -1,16 +1,12 @@
+"""Centralized Weights & Biases telemetry logger for the BCCD pipeline."""
 from __future__ import annotations
-
 from typing import Any
-
 import wandb
-
-
 class WandBLogger:
     """
     Single Responsibility: handles all interaction with Weights & Biases.
     No training logic, no file I/O, no model loading lives here.
     """
-
     def __init__(self, cfg: dict[str, Any], run_name: str | None = None) -> None:
         """
         Args:
@@ -26,15 +22,12 @@ class WandBLogger:
             config=cfg,
             reinit=True,
         )
-
     # ------------------------------------------------------------------
     # Public interface
     # ------------------------------------------------------------------
-
     def log(self, metrics: dict[str, Any], step: int | None = None) -> None:
         """Log a dictionary of scalar metrics for a given step/epoch."""
         self._run.log(metrics, step=step)
-
     def log_confusion_matrix(
         self,
         labels: list[str],
@@ -52,17 +45,13 @@ class WandBLogger:
                 )
             }
         )
-
     def finish(self) -> None:
         """Close the W&B run cleanly."""
         self._run.finish()
-
     # ------------------------------------------------------------------
     # Context manager  (with WandBLogger(cfg) as logger:)
     # ------------------------------------------------------------------
-
     def __enter__(self) -> "WandBLogger":
         return self
-
     def __exit__(self, *_: Any) -> None:
         self.finish()
