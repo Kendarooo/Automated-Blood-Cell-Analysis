@@ -2,7 +2,4 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
-outputs/
 wandb/
-data/bccd/
-data/synthetic_test/
