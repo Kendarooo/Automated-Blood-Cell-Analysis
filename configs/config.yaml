@@ -55,3 +55,7 @@ augmentation:
   # Normalization (ImageNet stats)
   normalize_mean: [0.485, 0.456, 0.406]
   normalize_std: [0.229, 0.224, 0.225]
+
+extractor:
+  truncate_at: "layer3"   # layer2=128, layer3=256, layer4=512 dims
+  projection_dim: null    # null = sin proyección, int = activa FR-7
