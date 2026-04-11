@@ -1,3 +1,9 @@
+"""Fine-tuning pipeline for YOLO object detection on the BCCD dataset."""
+# src/detection/yolo_train.py
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6, Gemini.
+# Description: Fine-tuning of YOLO model on BCCD dataset.
+# Responsibility: Model loading, training loop, W&B metric forwarding.
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -8,8 +14,7 @@ from ultralytics.utils.callbacks.wb import callbacks as yolo_wb_callbacks
 
 from src.utils.wandb_logger import WandBLogger
 
-
-class YOLOModelFactory:
+class YOLOModelFactory:  # pylint: disable=too-few-public-methods
     """
     Open/Closed Principle: new model variants can be added without
     modifying YOLOTrainer. Factory isolates model instantiation.
@@ -29,7 +34,7 @@ class YOLOModelFactory:
         return YOLO(weights)
 
 
-class YOLOTrainer:
+class YOLOTrainer:  # pylint: disable=too-many-instance-attributes,too-few-public-methods
     """
     Single Responsibility: orchestrates YOLO fine-tuning only.
     Does NOT crop images, does NOT log to W&B directly (delegates to WandBLogger).
