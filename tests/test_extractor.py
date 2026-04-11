@@ -98,3 +98,76 @@ class TestCellCropperUniformSize:
         box = make_box(10, 10, 80, 80)
         crop = cropper.crop(full_image, box)
         assert crop.mode == "RGB"
+
+# ---------------------------------------------------------------------------
+# NFR-6b: extractor produces vectors of expected dimensionality
+# ---------------------------------------------------------------------------
+
+class TestResNet18ExtractorDimensionality:
+    """NFR-6b — extractor output matches the configured truncation layer."""
+
+    @pytest.fixture
+    def base_cfg(self) -> dict:
+        """Minimal config dict for the extractor."""
+        return {
+            "augmentation": {
+                "normalize_mean": [0.485, 0.456, 0.406],
+                "normalize_std": [0.229, 0.224, 0.225],
+            }
+        }
+
+    def _make_cfg(self, base_cfg, truncate_at, projection_dim=None):
+        base_cfg["extractor"] = {
+            "truncate_at": truncate_at,
+            "projection_dim": projection_dim,
+        }
+        return base_cfg
+
+    def test_layer2_produces_128_dims(self, base_cfg):
+        """Truncating at layer2 must produce 128-dimensional vectors."""
+        import torch
+        from src.features.extractor import ResNet18Extractor
+        extractor = ResNet18Extractor(self._make_cfg(base_cfg, "layer2"))
+        output = extractor(torch.zeros(2, 3, 224, 224))
+        assert output.shape == (2, 128)
+        assert extractor.output_dim == 128
+
+    def test_layer3_produces_256_dims(self, base_cfg):
+        """Truncating at layer3 must produce 256-dimensional vectors."""
+        import torch
+        from src.features.extractor import ResNet18Extractor
+        extractor = ResNet18Extractor(self._make_cfg(base_cfg, "layer3"))
+        output = extractor(torch.zeros(2, 3, 224, 224))
+        assert output.shape == (2, 256)
+        assert extractor.output_dim == 256
+
+    def test_layer4_produces_512_dims(self, base_cfg):
+        """Truncating at layer4 must produce 512-dimensional vectors."""
+        import torch
+        from src.features.extractor import ResNet18Extractor
+        extractor = ResNet18Extractor(self._make_cfg(base_cfg, "layer4"))
+        output = extractor(torch.zeros(2, 3, 224, 224))
+        assert output.shape == (2, 512)
+        assert extractor.output_dim == 512
+
+    def test_projection_reduces_dimensionality(self, base_cfg):
+        """Projection layer must compress output to projection_dim."""
+        import torch
+        from src.features.extractor import ResNet18Extractor
+        extractor = ResNet18Extractor(self._make_cfg(base_cfg, "layer4", projection_dim=64))
+        output = extractor(torch.zeros(2, 3, 224, 224))
+        assert output.shape == (2, 64)
+        assert extractor.output_dim == 64
+
+    def test_invalid_layer_raises(self, base_cfg):
+        """An invalid truncate_at value must raise ValueError immediately."""
+        from src.features.extractor import ResNet18Extractor
+        with pytest.raises(ValueError):
+            ResNet18Extractor(self._make_cfg(base_cfg, "layer99"))
+
+    def test_backbone_parameters_are_frozen(self, base_cfg):
+        """All backbone parameters must have requires_grad=False (CON-4)."""
+        from src.features.extractor import ResNet18Extractor
+        extractor = ResNet18Extractor(self._make_cfg(base_cfg, "layer3"))
+        for param in extractor._backbone.parameters():  # noqa: SLF001
+            assert not param.requires_grad
