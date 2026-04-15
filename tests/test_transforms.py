@@ -112,3 +112,40 @@ class TestTransformsBehavior:
         assert T.RandomRotation not in transform_types, (
             "ValTransforms must not contain RandomRotation."
         )
+
+    @pytest.mark.xfail(
+        reason=(
+            "ValTransforms still applies deterministic preprocessing "
+            "(Resize/ToTensor/Normalize), so the output is not pixel-identical "
+            "to the input image."
+        ),
+        strict=True,
+    )
+    def test_eval_output_is_identical_to_input(self):
+        """
+        Point 3 requested check:
+        in eval mode the output should be identical to the input image.
+
+        This test currently documents a gap in the implementation:
+        validation/inference avoids stochastic augmentation, but it still
+        applies deterministic preprocessing that changes pixel values.
+        """
+        import torchvision.transforms as T
+
+        cfg = {
+            "augmentation": {
+                "normalize_mean": [0.485, 0.456, 0.406],
+                "normalize_std": [0.229, 0.224, 0.225],
+            }
+        }
+
+        sample_image = Image.new("RGB", (224, 224), color=(180, 120, 140))
+        transform = ValTransforms(cfg)
+
+        output = transform(sample_image)
+        reference = T.ToTensor()(sample_image)
+
+        assert torch.allclose(output, reference), (
+            "Eval output should be identical to input, but deterministic "
+            "preprocessing still changes the image."
+        )
