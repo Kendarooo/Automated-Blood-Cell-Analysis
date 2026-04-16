@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from src.inference.baseline import BaselineDistribution, BaselineRepository
+from src.inference.run_loader import load_run
 
 
 @dataclass(frozen=True)
@@ -14,9 +16,10 @@ class ArtifactPaths:
 
     detector: Path
     extractor_config: Path
-    classifier: Path
+    classifier: Path | None
     normalizer: Path
     baseline: Path
+    classifier_run_dir: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -24,15 +27,17 @@ class InferenceArtifacts:
     """
     Loaded artifacts required by the inference pipeline.
 
-    At this stage, detector/classifier/normalizer are represented by their
-    validated paths until their dedicated loaders are integrated.
+    Detector/extractor_config/normalizer remain as validated paths.
+    The classifier may be either a validated artifact path or a restored model
+    loaded from a persisted experiment run.
     """
 
     detector: Path
     extractor_config: Path
-    classifier: Path
+    classifier: object
     normalizer: Path
     baseline: BaselineDistribution
+    classifier_run_summary: dict[str, Any] | None = None
 
 
 class ArtifactLoader:
@@ -51,25 +56,39 @@ class ArtifactLoader:
         """
         self._require_existing_path(paths.detector)
         self._require_existing_path(paths.extractor_config)
-        self._require_existing_path(paths.classifier)
         self._require_existing_path(paths.normalizer)
         self._require_existing_path(paths.baseline)
-        self._validate_classifier_type(
-            classifier_path=paths.classifier,
-            config=config,
-        )
 
         baseline = BaselineRepository.load(
             str(paths.baseline),
             expected_config=config,
         )
 
+        classifier: object
+        classifier_run_summary: dict[str, Any] | None = None
+        if paths.classifier_run_dir is not None:
+            loaded_run = load_run(paths.classifier_run_dir)
+            classifier = loaded_run.model
+            classifier_run_summary = loaded_run.run_summary
+        else:
+            if paths.classifier is None:
+                raise ValueError(
+                    "classifier must be provided when classifier_run_dir is not set."
+                )
+            self._require_existing_path(paths.classifier)
+            self._validate_classifier_type(
+                classifier_path=paths.classifier,
+                config=config,
+            )
+            classifier = paths.classifier
+
         return InferenceArtifacts(
             detector=paths.detector,
             extractor_config=paths.extractor_config,
-            classifier=paths.classifier,
+            classifier=classifier,
             normalizer=paths.normalizer,
             baseline=baseline,
+            classifier_run_summary=classifier_run_summary,
         )
 
     @staticmethod
