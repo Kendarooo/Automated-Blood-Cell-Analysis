@@ -42,6 +42,7 @@ def run_svm_experiment(
             project=wandb_cfg.get("project"),
             entity=wandb_cfg.get("entity"),
             name=wandb_cfg.get("run_name"),
+            settings=wandb.Settings(x_disable_viewer=True, silent=True),
             config={
                 "svm": svm_cfg,
                 "feature_metadata": feature_metadata,

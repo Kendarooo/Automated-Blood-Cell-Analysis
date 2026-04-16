@@ -26,7 +26,7 @@ def test_persist_run_writes_expected_json_files(tmp_path: Path) -> None:
         output_root=tmp_path,
         effective_config={"ann": {"lr": 1e-3}},
         metrics={"val_macro_f1": 0.75, "val_accuracy": 0.8},
-        feature_metadata={"feature_dim": 256, "class_names": ["WBC", "RBC", "Platelets"]},
+        feature_metadata={"feature_dim": 256, "class_names": ["Platelets", "RBC", "WBC"]},
         model_path=model_path,
     )
 

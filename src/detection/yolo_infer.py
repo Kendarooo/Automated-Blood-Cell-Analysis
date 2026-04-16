@@ -20,7 +20,8 @@ class BoundingBox:
     x1, y1: top-left corner.
     x2, y2: bottom-right corner.
     confidence: detection score.
-    class_id: integer class index (0=RBC, 1=WBC, 2=Platelet or as per data.yaml).
+    class_id: integer class index following the dataset `data.yaml`
+    (for BCCD v3: 0=Platelets, 1=RBC, 2=WBC).
     class_name: human-readable label.
     """
     x1: int

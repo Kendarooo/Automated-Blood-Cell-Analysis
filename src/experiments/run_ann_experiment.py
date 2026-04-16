@@ -44,6 +44,7 @@ def run_ann_experiment(
             project=wandb_cfg.get("project"),
             entity=wandb_cfg.get("entity"),
             name=wandb_cfg.get("run_name"),
+            settings=wandb.Settings(x_disable_viewer=True, silent=True),
             config={
                 "ann": ann_cfg,
                 "dataset": {"batch_size": batch_size},

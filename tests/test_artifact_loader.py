@@ -45,7 +45,7 @@ def _prepared_ann_features(feature_dim: int = 4) -> PreparedFeatureSplits:
         train=FeatureSplit(features=train_features, labels=train_labels),
         val=FeatureSplit(features=val_features, labels=val_labels),
         metadata=FeatureMetadata(
-            class_names=("WBC", "RBC", "Platelets"),
+            class_names=("Platelets", "RBC", "WBC"),
             feature_dim=feature_dim,
             truncate_at="layer3",
             projection_dim=None,
@@ -77,7 +77,7 @@ def _prepared_svm_features(feature_dim: int = 2) -> PreparedFeatureSplits:
         train=FeatureSplit(features=train_features, labels=train_labels),
         val=FeatureSplit(features=val_features, labels=val_labels),
         metadata=FeatureMetadata(
-            class_names=("WBC", "RBC", "Platelets"),
+            class_names=("Platelets", "RBC", "WBC"),
             feature_dim=feature_dim,
             truncate_at="layer3",
             projection_dim=None,
@@ -114,8 +114,8 @@ def test_artifact_loader_rejects_baseline_with_config_mismatch(tmp_path: Path) -
     classifier_path.write_text("classifier", encoding="utf-8")
     normalizer_path.write_text("normalizer", encoding="utf-8")
 
-    baseline = BaselineEstimator(["WBC", "RBC", "Platelets"]).fit_from_train_counts(
-        train_counts=[{"WBC": 1, "RBC": 8, "Platelets": 1}],
+    baseline = BaselineEstimator(["Platelets", "RBC", "WBC"]).fit_from_train_counts(
+        train_counts=[{"Platelets": 1, "RBC": 8, "WBC": 1}],
         config={"inference": {"alpha": 0.05}},
     )
     BaselineRepository.save(baseline, str(baseline_path))
@@ -145,8 +145,8 @@ def test_artifact_loader_rejects_unexpected_classifier_type(tmp_path: Path) -> N
     classifier_path.write_text("classifier", encoding="utf-8")
     normalizer_path.write_text("normalizer", encoding="utf-8")
 
-    baseline = BaselineEstimator(["WBC", "RBC", "Platelets"]).fit_from_train_counts(
-        train_counts=[{"WBC": 1, "RBC": 8, "Platelets": 1}],
+    baseline = BaselineEstimator(["Platelets", "RBC", "WBC"]).fit_from_train_counts(
+        train_counts=[{"Platelets": 1, "RBC": 8, "WBC": 1}],
         config={"classifier": {"type": "ann"}},
     )
     BaselineRepository.save(baseline, str(baseline_path))
@@ -174,8 +174,8 @@ def test_artifact_loader_restores_ann_from_run_dir(tmp_path: Path) -> None:
     extractor_config_path.write_text("{}", encoding="utf-8")
     normalizer_path.write_text("normalizer", encoding="utf-8")
 
-    baseline = BaselineEstimator(["WBC", "RBC", "Platelets"]).fit_from_train_counts(
-        train_counts=[{"WBC": 1, "RBC": 8, "Platelets": 1}],
+    baseline = BaselineEstimator(["Platelets", "RBC", "WBC"]).fit_from_train_counts(
+        train_counts=[{"Platelets": 1, "RBC": 8, "WBC": 1}],
         config={"classifier": {"type": "ann"}},
     )
     BaselineRepository.save(baseline, str(baseline_path))
@@ -229,8 +229,8 @@ def test_artifact_loader_restores_svm_from_run_dir(tmp_path: Path) -> None:
     extractor_config_path.write_text("{}", encoding="utf-8")
     normalizer_path.write_text("normalizer", encoding="utf-8")
 
-    baseline = BaselineEstimator(["WBC", "RBC", "Platelets"]).fit_from_train_counts(
-        train_counts=[{"WBC": 1, "RBC": 8, "Platelets": 1}],
+    baseline = BaselineEstimator(["Platelets", "RBC", "WBC"]).fit_from_train_counts(
+        train_counts=[{"Platelets": 1, "RBC": 8, "WBC": 1}],
         config={"classifier": {"type": "svm"}},
     )
     BaselineRepository.save(baseline, str(baseline_path))

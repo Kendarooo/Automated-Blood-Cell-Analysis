@@ -47,7 +47,7 @@ def _prepared_ann_features(feature_dim: int = 4) -> PreparedFeatureSplits:
         train=FeatureSplit(features=train_features, labels=train_labels),
         val=FeatureSplit(features=val_features, labels=val_labels),
         metadata=FeatureMetadata(
-            class_names=("WBC", "RBC", "Platelets"),
+            class_names=("Platelets", "RBC", "WBC"),
             feature_dim=feature_dim,
             truncate_at="layer3",
             projection_dim=None,
@@ -79,7 +79,7 @@ def _prepared_svm_features(feature_dim: int = 2) -> PreparedFeatureSplits:
         train=FeatureSplit(features=train_features, labels=train_labels),
         val=FeatureSplit(features=val_features, labels=val_labels),
         metadata=FeatureMetadata(
-            class_names=("WBC", "RBC", "Platelets"),
+            class_names=("Platelets", "RBC", "WBC"),
             feature_dim=feature_dim,
             truncate_at="layer3",
             projection_dim=None,

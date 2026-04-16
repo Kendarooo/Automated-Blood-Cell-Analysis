@@ -43,7 +43,7 @@ def _prepared_features(feature_dim: int = 4) -> PreparedFeatureSplits:
         train=FeatureSplit(features=train_features, labels=train_labels),
         val=FeatureSplit(features=val_features, labels=val_labels),
         metadata=FeatureMetadata(
-            class_names=("WBC", "RBC", "Platelets"),
+            class_names=("Platelets", "RBC", "WBC"),
             feature_dim=feature_dim,
             truncate_at="layer3",
             projection_dim=None,
@@ -166,6 +166,6 @@ def test_run_ann_experiment_logs_to_wandb_when_enabled(monkeypatch) -> None:
     assert captured["log"] is not None
     assert "val_macro_f1" in captured["log"]
     assert "val_accuracy" in captured["log"]
-    assert "val_precision_WBC" in captured["log"]
+    assert "val_precision_Platelets" in captured["log"]
     assert "val_recall_RBC" in captured["log"]
     assert captured["finish_calls"] == 1

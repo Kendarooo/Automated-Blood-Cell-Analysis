@@ -21,7 +21,7 @@ from src.inference.statistical_test import (
 )
 
 
-CLASS_ORDER = ["WBC", "RBC", "Platelets"]
+CLASS_ORDER = ["Platelets", "RBC", "WBC"]
 
 
 def test_cell_count_aggregator_counts_labels_in_configured_order() -> None:
@@ -29,13 +29,13 @@ def test_cell_count_aggregator_counts_labels_in_configured_order() -> None:
     aggregator = CellCountAggregator(CLASS_ORDER)
     counts = aggregator.aggregate(["RBC", "RBC", "WBC", "Platelets", "RBC"])
 
-    assert counts == {"WBC": 1, "RBC": 3, "Platelets": 1}
+    assert counts == {"Platelets": 1, "RBC": 3, "WBC": 1}
 
 
 def test_cell_proportions_sum_to_one() -> None:
     """Computed cell proportions must sum to one for non-empty detections."""
     calculator = CellProportionCalculator(CLASS_ORDER)
-    statistics = calculator.compute({"WBC": 2, "RBC": 6, "Platelets": 2})
+    statistics = calculator.compute({"Platelets": 2, "RBC": 6, "WBC": 2})
 
     assert statistics.total_cells == 10
     assert pytest.approx(sum(statistics.proportions.values()), rel=1e-9) == 1.0
@@ -44,10 +44,10 @@ def test_cell_proportions_sum_to_one() -> None:
 def test_cell_proportion_calculator_handles_empty_counts() -> None:
     """Empty detections must not crash and should produce zero proportions."""
     calculator = CellProportionCalculator(CLASS_ORDER)
-    statistics = calculator.compute({"WBC": 0, "RBC": 0, "Platelets": 0})
+    statistics = calculator.compute({"Platelets": 0, "RBC": 0, "WBC": 0})
 
     assert statistics.total_cells == 0
-    assert statistics.proportions == {"WBC": 0.0, "RBC": 0.0, "Platelets": 0.0}
+    assert statistics.proportions == {"Platelets": 0.0, "RBC": 0.0, "WBC": 0.0}
 
 
 def test_baseline_estimator_uses_train_counts_only() -> None:
@@ -56,8 +56,8 @@ def test_baseline_estimator_uses_train_counts_only() -> None:
     config = {"inference": {"alpha": 0.05}}
     baseline = estimator.fit_from_train_counts(
         train_counts=[
-            {"WBC": 1, "RBC": 8, "Platelets": 1},
-            {"WBC": 2, "RBC": 7, "Platelets": 1},
+            {"Platelets": 1, "RBC": 8, "WBC": 1},
+            {"Platelets": 1, "RBC": 7, "WBC": 2},
         ],
         config=config,
     )
@@ -72,7 +72,7 @@ def test_baseline_repository_rejects_config_mismatch(tmp_path: Path) -> None:
     """Loading a baseline with a different config must raise an error."""
     estimator = BaselineEstimator(CLASS_ORDER)
     baseline = estimator.fit_from_train_counts(
-        train_counts=[{"WBC": 1, "RBC": 8, "Platelets": 1}],
+        train_counts=[{"Platelets": 1, "RBC": 8, "WBC": 1}],
         config={"inference": {"alpha": 0.05}},
     )
     path = tmp_path / "baseline.json"
@@ -96,11 +96,11 @@ def test_statistical_detector_flags_no_cells_detected() -> None:
         )
     )
     baseline = BaselineEstimator(CLASS_ORDER).fit_from_train_counts(
-        train_counts=[{"WBC": 1, "RBC": 8, "Platelets": 1}],
+        train_counts=[{"Platelets": 1, "RBC": 8, "WBC": 1}],
         config={"inference": {"alpha": 0.05}},
     )
     statistics = CellProportionCalculator(CLASS_ORDER).compute(
-        {"WBC": 0, "RBC": 0, "Platelets": 0}
+        {"Platelets": 0, "RBC": 0, "WBC": 0}
     )
 
     result = detector.evaluate(baseline, statistics)
@@ -121,11 +121,11 @@ def test_statistical_detector_skips_images_with_too_few_cells() -> None:
         )
     )
     baseline = BaselineEstimator(CLASS_ORDER).fit_from_train_counts(
-        train_counts=[{"WBC": 1, "RBC": 8, "Platelets": 1}],
+        train_counts=[{"Platelets": 1, "RBC": 8, "WBC": 1}],
         config={"inference": {"alpha": 0.05}},
     )
     statistics = CellProportionCalculator(CLASS_ORDER).compute(
-        {"WBC": 1, "RBC": 2, "Platelets": 1}
+        {"Platelets": 1, "RBC": 2, "WBC": 1}
     )
 
     result = detector.evaluate(baseline, statistics)
@@ -145,11 +145,11 @@ def test_statistical_detector_skips_low_expected_count_case() -> None:
         )
     )
     baseline = BaselineEstimator(CLASS_ORDER).fit_from_train_counts(
-        train_counts=[{"WBC": 1, "RBC": 8, "Platelets": 1}],
+        train_counts=[{"Platelets": 1, "RBC": 8, "WBC": 1}],
         config={"inference": {"alpha": 0.05}},
     )
     statistics = CellProportionCalculator(CLASS_ORDER).compute(
-        {"WBC": 1, "RBC": 3, "Platelets": 1}
+        {"Platelets": 1, "RBC": 3, "WBC": 1}
     )
 
     result = detector.evaluate(baseline, statistics)
@@ -170,13 +170,13 @@ def test_statistical_detector_runs_and_returns_p_value() -> None:
     )
     baseline = BaselineEstimator(CLASS_ORDER).fit_from_train_counts(
         train_counts=[
-            {"WBC": 1, "RBC": 8, "Platelets": 1},
-            {"WBC": 1, "RBC": 8, "Platelets": 1},
+            {"Platelets": 1, "RBC": 8, "WBC": 1},
+            {"Platelets": 1, "RBC": 8, "WBC": 1},
         ],
         config={"inference": {"alpha": 0.05}},
     )
     statistics = CellProportionCalculator(CLASS_ORDER).compute(
-        {"WBC": 4, "RBC": 2, "Platelets": 4}
+        {"Platelets": 4, "RBC": 2, "WBC": 4}
     )
 
     result = detector.evaluate(baseline, statistics)
@@ -190,11 +190,11 @@ def test_statistical_detector_runs_and_returns_p_value() -> None:
 def test_class_order_mismatch_raises_error() -> None:
     """Detector must fail loudly if baseline and statistics use different class order."""
     baseline = BaselineEstimator(CLASS_ORDER).fit_from_train_counts(
-        train_counts=[{"WBC": 1, "RBC": 8, "Platelets": 1}],
+        train_counts=[{"Platelets": 1, "RBC": 8, "WBC": 1}],
         config={"inference": {"alpha": 0.05}},
     )
-    statistics = CellProportionCalculator(["RBC", "WBC", "Platelets"]).compute(
-        {"RBC": 90, "WBC": 5, "Platelets": 5}
+    statistics = CellProportionCalculator(["RBC", "Platelets", "WBC"]).compute(
+        {"RBC": 90, "Platelets": 5, "WBC": 5}
     )
     detector = StatisticalAnomalyDetector(
         StatisticalTestConfig(

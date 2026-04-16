@@ -42,7 +42,7 @@ def _prepared_features(feature_dim: int = 4) -> PreparedFeatureSplits:
         train=FeatureSplit(features=train_features, labels=train_labels),
         val=FeatureSplit(features=val_features, labels=val_labels),
         metadata=FeatureMetadata(
-            class_names=("WBC", "RBC", "Platelets"),
+            class_names=("Platelets", "RBC", "WBC"),
             feature_dim=feature_dim,
             truncate_at="layer3",
             projection_dim=None,
@@ -88,12 +88,12 @@ def test_compare_ann_vs_svm_uses_same_feature_space_and_returns_side_by_side_met
     assert len(comparison["ann"]["val_confusion_matrix"]) == 3
     assert len(comparison["svm"]["val_confusion_matrix"]) == 3
     assert set(comparison["ann"]["val_precision_per_class"].keys()) == {
-        "WBC",
-        "RBC",
         "Platelets",
+        "RBC",
+        "WBC",
     }
     assert set(comparison["svm"]["val_recall_per_class"].keys()) == {
-        "WBC",
-        "RBC",
         "Platelets",
+        "RBC",
+        "WBC",
     }

@@ -7,7 +7,7 @@ import numpy as np
 from src.experiments.evaluation import MulticlassEvaluator
 
 
-CLASS_NAMES = ("WBC", "RBC", "Platelets")
+CLASS_NAMES = ("Platelets", "RBC", "WBC")
 
 
 def test_evaluator_returns_confusion_matrix_with_expected_shape() -> None:
@@ -53,8 +53,8 @@ def test_evaluator_reports_precision_and_recall_per_class() -> None:
 
     metrics = evaluator.evaluate(y_true, y_pred)
 
-    assert metrics.precision_per_class["WBC"] == 0.5
-    assert metrics.recall_per_class["WBC"] == 0.5
+    assert metrics.precision_per_class["Platelets"] == 0.5
+    assert metrics.recall_per_class["Platelets"] == 0.5
     assert metrics.precision_per_class["RBC"] == 2 / 3
     assert metrics.recall_per_class["RBC"] == 1.0
 
@@ -67,8 +67,8 @@ def test_evaluator_handles_class_never_predicted() -> None:
 
     metrics = evaluator.evaluate(y_true, y_pred)
 
-    assert metrics.precision_per_class["WBC"] == 0.0
-    assert metrics.recall_per_class["WBC"] == 0.0
+    assert metrics.precision_per_class["Platelets"] == 0.0
+    assert metrics.recall_per_class["Platelets"] == 0.0
     assert not np.isnan(metrics.macro_f1)
 
 
@@ -80,5 +80,5 @@ def test_evaluator_handles_class_absent_in_ground_truth() -> None:
 
     metrics = evaluator.evaluate(y_true, y_pred)
 
-    assert metrics.recall_per_class["WBC"] == 0.0
+    assert metrics.recall_per_class["Platelets"] == 0.0
     assert not np.isnan(metrics.macro_f1)

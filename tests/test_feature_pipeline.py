@@ -88,7 +88,7 @@ def _config(
         projection_dim=projection_dim,
         normalization_enabled=normalization_enabled,
         dimensionality_strategy=dimensionality_strategy,
-        class_names=("WBC", "RBC", "Platelets"),
+        class_names=("Platelets", "RBC", "WBC"),
     )
 
 
@@ -183,7 +183,7 @@ def test_feature_pipeline_metadata_reports_projection_consistently() -> None:
     assert prepared.metadata.truncate_at == "layer4"
     assert prepared.metadata.projection_dim == 64
     assert prepared.metadata.feature_dim == 64
-    assert prepared.metadata.class_names == ("WBC", "RBC", "Platelets")
+    assert prepared.metadata.class_names == ("Platelets", "RBC", "WBC")
 
 
 def test_feature_pipeline_only_requests_train_and_val_splits() -> None:

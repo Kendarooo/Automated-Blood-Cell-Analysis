@@ -9,11 +9,9 @@ import os
 from pathlib import Path
 from typing import Any
 
-import torch
 import wandb
-from torchvision.datasets import ImageFolder
 
-from src.data.transforms import ValTransforms
+from src.data.datasets import BCCDYoloSplitLoader
 from src.experiments.feature_pipeline import FeaturePipeline, FeaturePipelineConfig
 from src.experiments.run_ann_experiment import run_ann_experiment
 from src.experiments.run_svm_experiment import run_svm_experiment
@@ -22,38 +20,7 @@ from src.utils.config import load_config
 from src.utils.seed import set_seed
 
 
-DEFAULT_CLASS_NAMES = ("WBC", "RBC", "Platelets")
-
-
-class ImageFolderSplitLoader:
-    """Load one image split directory into tensors plus ordered labels."""
-
-    def __init__(self, cfg: dict[str, Any]) -> None:
-        self._transform = ValTransforms(cfg)
-
-    def load_split(
-        self,
-        split_dir: Path,
-        class_names: tuple[str, ...],
-    ) -> tuple[torch.Tensor, Any]:
-        dataset = ImageFolder(root=str(split_dir), transform=self._transform)
-        label_lookup = {name: idx for idx, name in enumerate(class_names)}
-        features: list[torch.Tensor] = []
-        labels: list[int] = []
-
-        for image, dataset_label in dataset:
-            dataset_class = dataset.classes[int(dataset_label)]
-            if dataset_class not in label_lookup:
-                raise ValueError(
-                    f"Unexpected class '{dataset_class}' found in {split_dir}."
-                )
-            features.append(image)
-            labels.append(label_lookup[dataset_class])
-
-        if not features:
-            raise ValueError(f"No images found in split directory '{split_dir}'.")
-
-        return torch.stack(features), torch.tensor(labels, dtype=torch.long).numpy()
+DEFAULT_CLASS_NAMES = ("Platelets", "RBC", "WBC")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -109,6 +76,7 @@ def _apply_wandb_overrides(cfg: dict[str, Any]) -> tuple[dict[str, Any], bool]:
         project=wandb_cfg.get("project"),
         entity=wandb_cfg.get("entity"),
         name=wandb_cfg.get("run_name"),
+        settings=wandb.Settings(x_disable_viewer=True, silent=True),
     )
     merged_cfg = copy.deepcopy(cfg)
     overrides = dict(wandb.config)
@@ -140,6 +108,7 @@ def _set_nested_value(cfg: dict[str, Any], dotted_key: str, value: Any) -> None:
 
 
 def _prepare_features(cfg: dict[str, Any]):
+    """Build prepared train/validation features directly from BCCD YOLO splits."""
     dataset_cfg = cfg.get("dataset", {})
     train_dir = Path(dataset_cfg.get("train_dir", "data/train"))
     val_dir = Path(dataset_cfg.get("val_dir", "data/val"))
@@ -163,7 +132,7 @@ def _prepare_features(cfg: dict[str, Any]):
             ),
             class_names=class_names,
         ),
-        split_loader=ImageFolderSplitLoader(cfg),
+        split_loader=BCCDYoloSplitLoader(cfg),
         extractor=ResNet18Extractor(cfg),
     )
     return pipeline.prepare_train_val_features()

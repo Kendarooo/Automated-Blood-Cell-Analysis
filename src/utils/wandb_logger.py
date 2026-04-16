@@ -2,6 +2,8 @@
 from __future__ import annotations
 from typing import Any
 import wandb
+
+
 class WandBLogger:
     """
     Single Responsibility: handles all interaction with Weights & Biases.
@@ -14,20 +16,25 @@ class WandBLogger:
             run_name: Optional override for the run name.
         """
         wandb_cfg: dict[str, Any] = cfg["wandb"]
+        self._enabled = bool(wandb_cfg.get("enabled", True))
 
-        self._run = wandb.init(
-            project=wandb_cfg["project"],
-            entity=wandb_cfg.get("entity"),
-            name=run_name or wandb_cfg.get("run_name"),
-            config=cfg,
-            reinit=True,
-        )
+        self._run = None
+        if self._enabled:
+            self._run = wandb.init(
+                project=wandb_cfg["project"],
+                entity=wandb_cfg.get("entity"),
+                name=run_name or wandb_cfg.get("run_name"),
+                config=cfg,
+                reinit=True,
+                settings=wandb.Settings(x_disable_viewer=True, silent=True),
+            )
     # ------------------------------------------------------------------
     # Public interface
     # ------------------------------------------------------------------
     def log(self, metrics: dict[str, Any], step: int | None = None) -> None:
         """Log a dictionary of scalar metrics for a given step/epoch."""
-        self._run.log(metrics, step=step)
+        if self._run is not None:
+            self._run.log(metrics, step=step)
     def log_confusion_matrix(
         self,
         labels: list[str],
@@ -35,19 +42,21 @@ class WandBLogger:
         preds: list[int],
     ) -> None:
         """Log a confusion matrix as a W&B artifact."""
-        self._run.log(
-            {
-                "confusion_matrix": wandb.plot.confusion_matrix(
-                    probs=None,
-                    y_true=y_true,
-                    preds=preds,
-                    class_names=labels,
-                )
-            }
-        )
+        if self._run is not None:
+            self._run.log(
+                {
+                    "confusion_matrix": wandb.plot.confusion_matrix(
+                        probs=None,
+                        y_true=y_true,
+                        preds=preds,
+                        class_names=labels,
+                    )
+                }
+            )
     def finish(self) -> None:
         """Close the W&B run cleanly."""
-        self._run.finish()
+        if self._run is not None:
+            self._run.finish()
     # ------------------------------------------------------------------
     # Context manager  (with WandBLogger(cfg) as logger:)
     # ------------------------------------------------------------------

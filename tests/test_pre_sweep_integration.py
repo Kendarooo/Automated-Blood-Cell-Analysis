@@ -106,7 +106,7 @@ def test_pre_sweep_pipeline_is_valid() -> None:
         projection_dim=None,
         normalization_enabled=True,
         dimensionality_strategy="none",
-        class_names=("WBC", "RBC", "Platelets"),
+        class_names=("Platelets", "RBC", "WBC"),
     )
     split_loader = StubSplitLoader()
     normalizer = RecordingNormalizer()

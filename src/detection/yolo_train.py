@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import csv
 from pathlib import Path
 from typing import Any
 
@@ -26,7 +27,7 @@ class YOLOModelFactory:  # pylint: disable=too-few-public-methods
         Load a YOLO model from pretrained weights.
 
         Args:
-            weights: Path or name of pretrained weights (e.g. 'yolo12s.pt').
+            weights: Path or name of pretrained weights (e.g. 'yolo26s.pt').
 
         Returns:
             Initialized YOLO instance.
@@ -99,7 +100,9 @@ class YOLOTrainer:  # pylint: disable=too-many-instance-attributes,too-few-publi
             verbose=True,
         )
 
-        best_weights = self._output_dir / "yolo_finetune" / "weights" / "best.pt"
+        save_dir = Path(model.trainer.save_dir)
+        self._log_results_csv(save_dir / "results.csv")
+        best_weights = save_dir / "weights" / "best.pt"
         return best_weights
 
     # ------------------------------------------------------------------
@@ -119,6 +122,10 @@ class YOLOTrainer:  # pylint: disable=too-many-instance-attributes,too-few-publi
                 "epoch": epoch,
                 "train/box_loss": metrics.get("train/box_loss"),
                 "train/cls_loss": metrics.get("train/cls_loss"),
+                "train/dfl_loss": metrics.get("train/dfl_loss"),
+                "val/box_loss": metrics.get("val/box_loss"),
+                "val/cls_loss": metrics.get("val/cls_loss"),
+                "val/dfl_loss": metrics.get("val/dfl_loss"),
                 "val/mAP50": metrics.get("metrics/mAP50"),
                 "val/mAP50-95": metrics.get("metrics/mAP50-95"),
                 "val/precision": metrics.get("metrics/precision"),
@@ -126,3 +133,50 @@ class YOLOTrainer:  # pylint: disable=too-many-instance-attributes,too-few-publi
             },
             step=epoch,
         )
+
+    def _log_results_csv(self, results_csv_path: Path) -> None:
+        """
+        Backfill metrics from Ultralytics' results.csv into W&B.
+
+        The callback path can miss detection metrics depending on when
+        Ultralytics populates trainer.metrics. results.csv is the most stable
+        source of truth after training finishes.
+        """
+        if not results_csv_path.exists():
+            return
+
+        with results_csv_path.open("r", encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            for row in reader:
+                epoch_value = row.get("epoch")
+                if epoch_value is None:
+                    continue
+
+                epoch = int(float(epoch_value)) - 1
+                payload = self._build_results_payload(row)
+                if payload:
+                    self._logger.log(payload, step=epoch)
+
+    @staticmethod
+    def _build_results_payload(row: dict[str, str]) -> dict[str, float]:
+        key_mapping = {
+            "train/box_loss": "train/box_loss",
+            "train/cls_loss": "train/cls_loss",
+            "train/dfl_loss": "train/dfl_loss",
+            "val/box_loss": "val/box_loss",
+            "val/cls_loss": "val/cls_loss",
+            "val/dfl_loss": "val/dfl_loss",
+            "metrics/precision(B)": "metrics/precision(B)",
+            "metrics/recall(B)": "metrics/recall(B)",
+            "metrics/mAP50(B)": "metrics/mAP50(B)",
+            "metrics/mAP50-95(B)": "metrics/mAP50-95(B)",
+        }
+        payload: dict[str, float] = {}
+
+        for csv_key, log_key in key_mapping.items():
+            value = row.get(csv_key)
+            if value in (None, ""):
+                continue
+            payload[log_key] = float(value)
+
+        return payload
