@@ -1,0 +1,38 @@
+# FR-11 ANN sweep configuration.
+# Assumes the ANN experiment entrypoint will dispatch to
+# src/experiments/run_ann_experiment.py using a merged config.
+
+program: src/experiments/run_ann_experiment.py
+method: bayes
+
+metric:
+  name: val_macro_f1
+  goal: maximize
+
+parameters:
+  wandb.enabled:
+    value: true
+
+  wandb.project:
+    value: bccd-hemograma
+
+  ann.hidden_dims:
+    values:
+      - [64]
+      - [128, 64]
+      - [256, 128]
+
+  ann.dropout:
+    values: [0.0, 0.1, 0.3, 0.5]
+
+  ann.lr:
+    values: [0.0001, 0.001, 0.01]
+
+  ann.weight_decay:
+    values: [0.0, 0.0001, 0.001]
+
+  ann.epochs:
+    values: [5, 10, 20]
+
+  dataset.batch_size:
+    values: [16, 32, 64]

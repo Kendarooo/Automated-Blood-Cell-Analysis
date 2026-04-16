@@ -1,0 +1,26 @@
+# FR-11 SVM sweep configuration.
+# Uses point-config mode in src/experiments/run_svm_experiment.py
+# so each W&B run evaluates exactly one SVM configuration.
+
+program: src/experiments/run_svm_experiment.py
+method: bayes
+
+metric:
+  name: val_macro_f1
+  goal: maximize
+
+parameters:
+  wandb.enabled:
+    value: true
+
+  wandb.project:
+    value: bccd-hemograma
+
+  svm.kernel:
+    values: ["linear", "rbf"]
+
+  svm.C:
+    values: [0.1, 1.0, 10.0, 100.0]
+
+  svm.gamma:
+    values: ["scale", 0.01, 0.1, 1.0]

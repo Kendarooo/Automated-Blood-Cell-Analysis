@@ -43,3 +43,40 @@ def test_svm_trainer_compares_linear_and_rbf_on_validation() -> None:
     best = trainer.select_best(results)
     assert best.kernel in {"linear", "rbf"}
     assert 0.0 <= best.accuracy <= 1.0
+
+
+def test_svm_trainer_can_return_best_trained_model() -> None:
+    """The trainer should expose the winning fitted classifier without refitting."""
+    train_features = np.array([
+        [0.0, 0.0],
+        [0.1, 0.2],
+        [1.0, 1.0],
+        [1.1, 1.2],
+        [2.0, 2.0],
+        [2.1, 2.2],
+    ])
+    train_labels = np.array([0, 0, 1, 1, 2, 2])
+
+    val_features = np.array([
+        [0.05, 0.1],
+        [1.05, 1.1],
+        [2.05, 2.1],
+    ])
+    val_labels = np.array([0, 1, 2])
+
+    trainer = SVMTrainer()
+    runs = trainer.compare_kernels_with_models(
+        train_split=DatasetSplit(features=train_features, labels=train_labels),
+        val_split=DatasetSplit(features=val_features, labels=val_labels),
+        c_values=[0.1, 1.0],
+        gamma_values=["scale", 0.5],
+    )
+
+    assert runs, "Expected at least one trained SVM run."
+    best_run = trainer.select_best_trained(runs)
+
+    predictions = best_run.classifier.predict(val_features)
+
+    assert best_run.result.kernel in {"linear", "rbf"}
+    assert 0.0 <= best_run.result.accuracy <= 1.0
+    assert predictions.shape == val_labels.shape
