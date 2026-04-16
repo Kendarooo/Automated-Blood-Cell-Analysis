@@ -1,8 +1,14 @@
 # FR-11 ANN sweep configuration.
-# Assumes the ANN experiment entrypoint will dispatch to
-# src/experiments/run_ann_experiment.py using a merged config.
+# Launch with a bounded agent invocation, e.g.:
+#   wandb agent --count 40 <entity>/<project>/<sweep_id>
 
-program: src/experiments/run_ann_experiment.py
+program: src/experiments/cli.py
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - --runner
+  - ann
 method: bayes
 
 metric:

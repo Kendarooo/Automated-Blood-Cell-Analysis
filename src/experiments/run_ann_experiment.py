@@ -21,6 +21,7 @@ def run_ann_experiment(
 ) -> dict[str, object]:
     """Run one ANN experiment over precomputed train/validation features."""
     use_wandb = bool(merged_cfg.get("wandb", {}).get("enabled", False))
+    started_wandb_run = False
     ann_cfg = merged_cfg.get("ann", {})
     batch_size = int(merged_cfg.get("dataset", {}).get("batch_size", 32))
     epochs = int(ann_cfg.get("epochs", 1))
@@ -37,7 +38,7 @@ def run_ann_experiment(
         "dimensionality_strategy": prepared.metadata.dimensionality_strategy,
     }
 
-    if use_wandb:
+    if use_wandb and wandb.run is None:
         wandb_cfg = merged_cfg.get("wandb", {})
         wandb.init(
             project=wandb_cfg.get("project"),
@@ -50,6 +51,7 @@ def run_ann_experiment(
                 "feature_metadata": feature_metadata,
             },
         )
+        started_wandb_run = True
 
     train_loader = _build_dataloader(
         features=prepared.train.features,
@@ -112,7 +114,8 @@ def run_ann_experiment(
             log_payload[f"val_recall_{class_name}"] = float(value)
 
         wandb.log(log_payload)
-        wandb.finish()
+        if started_wandb_run:
+            wandb.finish()
 
     from pathlib import Path
 

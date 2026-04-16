@@ -1,8 +1,16 @@
 # FR-11 SVM sweep configuration.
 # Uses point-config mode in src/experiments/run_svm_experiment.py
 # so each W&B run evaluates exactly one SVM configuration.
+# Launch with a bounded agent invocation, e.g.:
+#   wandb agent --count 30 <entity>/<project>/<sweep_id>
 
-program: src/experiments/run_svm_experiment.py
+program: src/experiments/cli.py
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - --runner
+  - svm
 method: bayes
 
 metric:

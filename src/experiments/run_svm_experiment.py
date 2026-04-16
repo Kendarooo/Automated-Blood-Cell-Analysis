@@ -20,6 +20,7 @@ def run_svm_experiment(
 ) -> dict[str, object]:
     """Run one SVM experiment over precomputed train/validation features."""
     use_wandb = bool(merged_cfg.get("wandb", {}).get("enabled", False))
+    started_wandb_run = False
     svm_cfg = merged_cfg.get("svm", {})
     has_point_config = all(
         key in svm_cfg for key in ("kernel", "C", "gamma")
@@ -35,7 +36,7 @@ def run_svm_experiment(
         "dimensionality_strategy": prepared.metadata.dimensionality_strategy,
     }
 
-    if use_wandb:
+    if use_wandb and wandb.run is None:
         wandb_cfg = merged_cfg.get("wandb", {})
         wandb.init(
             project=wandb_cfg.get("project"),
@@ -46,6 +47,7 @@ def run_svm_experiment(
                 "feature_metadata": feature_metadata,
             },
         )
+        started_wandb_run = True
 
     train_split = DatasetSplit(
         features=prepared.train.features,
@@ -116,7 +118,8 @@ def run_svm_experiment(
             log_payload[f"val_recall_{class_name}"] = float(value)
 
         wandb.log(log_payload)
-        wandb.finish()
+        if started_wandb_run:
+            wandb.finish()
 
     from pathlib import Path
 
