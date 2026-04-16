@@ -30,3 +30,12 @@ Asegúrense de tener instaladas las dependencias gráficas básicas:
 ```bash
 pip install matplotlib pillow
 ```
+
+
+## 1. Crear y activar entorno virtual
+
+Desde la raíz del repositorio:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
