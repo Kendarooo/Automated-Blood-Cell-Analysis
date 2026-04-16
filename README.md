@@ -32,10 +32,22 @@ pip install matplotlib pillow
 ```
 
 
-## 1. Crear y activar entorno virtual
+## Crear y activar entorno virtual
 
 Desde la raíz del repositorio:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+```
+
+## Actualizar pip:
+
+```bash
+python -m pip install --upgrade pip
+```
+
+## Instalar dependencias
+```bash
+pip install -r requirements.txt
+```
