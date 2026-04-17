@@ -58,6 +58,8 @@ def main(argv: list[str] | None = None) -> dict[str, Any]:
     with WandBLogger(cfg) as logger:
         trainer = YOLOTrainer(cfg, logger=logger)
         best_weights = trainer.train()
+        wandb_run_id = logger.run_id
+        wandb_run_url = logger.run_url
 
     result = {
         "best_weights": str(best_weights),
@@ -69,6 +71,8 @@ def main(argv: list[str] | None = None) -> dict[str, Any]:
         "batch": detection_cfg.get("batch"),
         "lr0": detection_cfg.get("lr0"),
         "wandb_enabled": bool(cfg.get("wandb", {}).get("enabled", True)),
+        "wandb_run_id": wandb_run_id,
+        "wandb_run_url": wandb_run_url,
     }
     print(json.dumps(result, indent=2, sort_keys=True))
     return result

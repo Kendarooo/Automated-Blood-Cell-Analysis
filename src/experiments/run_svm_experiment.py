@@ -128,6 +128,10 @@ def run_svm_experiment(
     resolved_output_dir.mkdir(parents=True, exist_ok=True)
     model_path = resolved_output_dir / "model.joblib"
     joblib.dump(best_run.classifier, model_path)
+    normalizer_path = None
+    if prepared.normalizer is not None:
+        normalizer_path = resolved_output_dir / "normalizer.npz"
+        prepared.normalizer.save(str(normalizer_path))
 
     persistence_info = persist_run(
         run_id=run_id,
@@ -137,6 +141,7 @@ def run_svm_experiment(
         metrics=metrics_payload,
         feature_metadata=feature_metadata,
         model_path=model_path,
+        normalizer_path=normalizer_path,
         seed=merged_cfg.get("seed"),
         wandb_metadata={
             "enabled": use_wandb,

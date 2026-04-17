@@ -57,6 +57,16 @@ class WandBLogger:
         """Close the W&B run cleanly."""
         if self._run is not None:
             self._run.finish()
+
+    @property
+    def run_id(self) -> str | None:
+        """Return the active W&B run id when logging is enabled."""
+        return None if self._run is None else self._run.id
+
+    @property
+    def run_url(self) -> str | None:
+        """Return the active W&B run URL when logging is enabled."""
+        return None if self._run is None else self._run.url
     # ------------------------------------------------------------------
     # Context manager  (with WandBLogger(cfg) as logger:)
     # ------------------------------------------------------------------

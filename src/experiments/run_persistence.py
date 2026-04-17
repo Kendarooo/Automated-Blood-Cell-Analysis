@@ -22,6 +22,7 @@ def persist_run(
     metrics: dict[str, Any],
     feature_metadata: dict[str, Any],
     model_path: str | Path,
+    normalizer_path: str | Path | None = None,
     metric_name: str = "val_macro_f1",
     sweep_phase: str | None = None,
     seed: int | None = None,
@@ -36,6 +37,7 @@ def persist_run(
     feature_metadata_path = output_dir / "feature_metadata.json"
     summary_path = output_dir / "run_summary.json"
     resolved_model_path = Path(model_path)
+    resolved_normalizer_path = Path(normalizer_path) if normalizer_path is not None else None
 
     _write_json(metrics_path, metrics)
     _write_json(config_path, effective_config)
@@ -60,6 +62,8 @@ def persist_run(
         },
         "wandb": wandb_metadata or {"enabled": False},
     }
+    if resolved_normalizer_path is not None:
+        summary["local_artifact_paths"]["normalizer"] = str(resolved_normalizer_path)
     _write_json(summary_path, summary)
 
     return {

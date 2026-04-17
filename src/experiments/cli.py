@@ -131,6 +131,7 @@ def _prepare_features(cfg: dict[str, Any]):
                 dimensionality_strategy,
             ),
             class_names=class_names,
+            extraction_batch_size=int(dataset_cfg.get("batch_size", 32)),
         ),
         split_loader=BCCDYoloSplitLoader(cfg),
         extractor=ResNet18Extractor(cfg),

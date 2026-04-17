@@ -2,7 +2,7 @@ wandb:
   enabled: true
   project: "bccd-t2-ak"
   entity: "t2-ak-tec"
-  run_name: "yolo-smoke-1ep"
+  run_name: "ann-final-fr13"
 
 detection:
   # Pesos de inicio para fine-tuning (YOLO26s preentrenado en COCO).
@@ -18,9 +18,9 @@ detection:
   output_dir: "outputs"
 
   # Hiperparámetros de entrenamiento.
-  epochs: 50
-  imgsz: 640
-  batch: 16
+  epochs: 15
+  imgsz: 320
+  batch: 4
   lr0: 0.01
 
   # Hiperparámetros de inferencia.
@@ -77,15 +77,15 @@ feature_pipeline:
 
 ann:
   hidden_dims: [128, 64]
-  dropout: 0.3
-  lr: 0.001
-  weight_decay: 0.0
+  dropout: 0.6
+  lr: 0.0003
+  weight_decay: 0.001
   num_classes: 3
   epochs: 10
 
 svm:
-  kernel: "rbf"
-  C: 1.0
+  kernel: "linear"
+  C: 0.1
   gamma: "scale"
   c_values: [0.1, 1.0, 10.0]
   gamma_values: ["scale", 0.1, 1.0]

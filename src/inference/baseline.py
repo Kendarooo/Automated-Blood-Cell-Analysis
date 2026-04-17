@@ -24,8 +24,29 @@ class ConfigFingerprint:
     @staticmethod
     def build(config: dict) -> str:
         """Return a stable SHA-256 fingerprint for a configuration dictionary."""
-        canonical_json = json.dumps(config, sort_keys=True, separators=(",", ":"))
+        canonical_json = json.dumps(
+            ConfigFingerprint._select_relevant_config(config),
+            sort_keys=True,
+            separators=(",", ":"),
+        )
         return hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _select_relevant_config(config: dict) -> dict:
+        """Keep only config fields that materially affect baseline validity."""
+        dataset_cfg = config.get("dataset", {})
+        inference_cfg = config.get("inference", {})
+
+        if not dataset_cfg and not inference_cfg:
+            return config
+
+        return {
+            "dataset": {
+                "train_dir": dataset_cfg.get("train_dir"),
+                "class_names": dataset_cfg.get("class_names"),
+            },
+            "inference": inference_cfg,
+        }
 
 
 class BaselineEstimator:

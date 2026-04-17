@@ -8,6 +8,7 @@ import torch
 
 from src.inference.baseline import BaselineEstimator, BaselineRepository
 from src.inference.artifact_loader import ArtifactLoader, ArtifactPaths
+from src.features.normalize import FeatureNormalizer
 from src.experiments.feature_pipeline import (
     FeatureMetadata,
     FeatureSplit,
@@ -112,7 +113,9 @@ def test_artifact_loader_rejects_baseline_with_config_mismatch(tmp_path: Path) -
     detector_path.write_text("detector", encoding="utf-8")
     extractor_config_path.write_text("{}", encoding="utf-8")
     classifier_path.write_text("classifier", encoding="utf-8")
-    normalizer_path.write_text("normalizer", encoding="utf-8")
+    FeatureNormalizer().fit(
+        np.array([[0.0, 1.0], [1.0, 2.0]], dtype=np.float32)
+    ).save(str(normalizer_path))
 
     baseline = BaselineEstimator(["Platelets", "RBC", "WBC"]).fit_from_train_counts(
         train_counts=[{"Platelets": 1, "RBC": 8, "WBC": 1}],
@@ -143,7 +146,9 @@ def test_artifact_loader_rejects_unexpected_classifier_type(tmp_path: Path) -> N
     detector_path.write_text("detector", encoding="utf-8")
     extractor_config_path.write_text("{}", encoding="utf-8")
     classifier_path.write_text("classifier", encoding="utf-8")
-    normalizer_path.write_text("normalizer", encoding="utf-8")
+    FeatureNormalizer().fit(
+        np.array([[0.0, 1.0], [1.0, 2.0]], dtype=np.float32)
+    ).save(str(normalizer_path))
 
     baseline = BaselineEstimator(["Platelets", "RBC", "WBC"]).fit_from_train_counts(
         train_counts=[{"Platelets": 1, "RBC": 8, "WBC": 1}],
@@ -172,7 +177,9 @@ def test_artifact_loader_restores_ann_from_run_dir(tmp_path: Path) -> None:
 
     detector_path.write_text("detector", encoding="utf-8")
     extractor_config_path.write_text("{}", encoding="utf-8")
-    normalizer_path.write_text("normalizer", encoding="utf-8")
+    FeatureNormalizer().fit(
+        np.array([[0.0, 1.0], [1.0, 2.0]], dtype=np.float32)
+    ).save(str(normalizer_path))
 
     baseline = BaselineEstimator(["Platelets", "RBC", "WBC"]).fit_from_train_counts(
         train_counts=[{"Platelets": 1, "RBC": 8, "WBC": 1}],
@@ -227,7 +234,9 @@ def test_artifact_loader_restores_svm_from_run_dir(tmp_path: Path) -> None:
 
     detector_path.write_text("detector", encoding="utf-8")
     extractor_config_path.write_text("{}", encoding="utf-8")
-    normalizer_path.write_text("normalizer", encoding="utf-8")
+    FeatureNormalizer().fit(
+        np.array([[0.0, 1.0], [1.0, 2.0]], dtype=np.float32)
+    ).save(str(normalizer_path))
 
     baseline = BaselineEstimator(["Platelets", "RBC", "WBC"]).fit_from_train_counts(
         train_counts=[{"Platelets": 1, "RBC": 8, "WBC": 1}],

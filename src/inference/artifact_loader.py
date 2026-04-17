@@ -8,6 +8,7 @@ from typing import Any
 
 from src.inference.baseline import BaselineDistribution, BaselineRepository
 from src.inference.run_loader import load_run
+from src.features.normalize import FeatureNormalizer
 
 
 @dataclass(frozen=True)
@@ -35,7 +36,7 @@ class InferenceArtifacts:
     detector: Path
     extractor_config: Path
     classifier: object
-    normalizer: Path
+    normalizer: FeatureNormalizer
     baseline: BaselineDistribution
     classifier_run_summary: dict[str, Any] | None = None
 
@@ -63,6 +64,7 @@ class ArtifactLoader:
             str(paths.baseline),
             expected_config=config,
         )
+        normalizer = FeatureNormalizer.load(str(paths.normalizer))
 
         classifier: object
         classifier_run_summary: dict[str, Any] | None = None
@@ -86,7 +88,7 @@ class ArtifactLoader:
             detector=paths.detector,
             extractor_config=paths.extractor_config,
             classifier=classifier,
-            normalizer=paths.normalizer,
+            normalizer=normalizer,
             baseline=baseline,
             classifier_run_summary=classifier_run_summary,
         )

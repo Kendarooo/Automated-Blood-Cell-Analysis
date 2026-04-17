@@ -77,6 +77,60 @@ class BCCDYoloSplitLoader:
 
         return torch.stack(crops), np.asarray(labels, dtype=np.int64)
 
+    def iter_split_batches(
+        self,
+        split_dir: Path,
+        class_names: tuple[str, ...],
+        batch_size: int,
+    ):
+        """Yield one batch of cropped cells at a time to limit peak memory usage."""
+        images_dir = split_dir / "images"
+        labels_dir = split_dir / "labels"
+
+        if not images_dir.exists() or not labels_dir.exists():
+            raise ValueError(
+                f"Expected YOLO split directories '{images_dir}' and '{labels_dir}'."
+            )
+
+        batch_crops: list[torch.Tensor] = []
+        batch_labels: list[int] = []
+        yielded_any = False
+
+        for label_path in sorted(labels_dir.glob("*.txt")):
+            image_path = self._find_matching_image(images_dir, label_path.stem)
+            if image_path is None:
+                raise ValueError(
+                    f"Could not find image matching label file '{label_path.name}'."
+                )
+
+            with Image.open(image_path).convert("RGB") as image:
+                annotations = self._parse_annotations(
+                    label_path=label_path,
+                    image_width=image.width,
+                    image_height=image.height,
+                    num_classes=len(class_names),
+                )
+
+                for annotation in annotations:
+                    crop = image.crop(
+                        (annotation.x1, annotation.y1, annotation.x2, annotation.y2)
+                    )
+                    batch_crops.append(self._transform(crop))
+                    batch_labels.append(annotation.class_id)
+
+                    if len(batch_crops) >= batch_size:
+                        yielded_any = True
+                        yield torch.stack(batch_crops), np.asarray(batch_labels, dtype=np.int64)
+                        batch_crops = []
+                        batch_labels = []
+
+        if batch_crops:
+            yielded_any = True
+            yield torch.stack(batch_crops), np.asarray(batch_labels, dtype=np.int64)
+
+        if not yielded_any:
+            raise ValueError(f"No annotated cells found in split directory '{split_dir}'.")
+
     @staticmethod
     def _find_matching_image(images_dir: Path, stem: str) -> Path | None:
         for suffix in SUPPORTED_IMAGE_SUFFIXES:
