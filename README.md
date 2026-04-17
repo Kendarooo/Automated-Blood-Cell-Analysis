@@ -63,4 +63,17 @@ Ingresá tu API key cuando se solicite. La podés encontrar en [https://wandb.ai
  
 Antes de correr cualquier etapa, revisá `configs/config.yaml` y ajustá las rutas y hiperparámetros según tu entorno. Los valores por defecto funcionan si respetás la estructura de carpetas anterior.
 
+## 7. Correr los tests
  
+```bash
+pytest tests/ -v
+```
+ 
+Para correr solo un módulo específico:
+ 
+```bash
+pytest tests/test_extractor.py -v
+pytest tests/test_transforms.py -v
+pytest tests/test_ann_training.py -v
+pytest tests/test_inference.py -v
+```
