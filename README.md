@@ -51,3 +51,16 @@ python -m pip install --upgrade pip
 ```bash
 pip install -r requirements.txt
 ```
+## 5. Configurar Weights & Biases
+ 
+```bash
+wandb login
+```
+ 
+Ingresá tu API key cuando se solicite. La podés encontrar en [https://wandb.ai/authorize](https://wandb.ai/authorize).
+
+## 6. Revisar la configuración
+ 
+Antes de correr cualquier etapa, revisá `configs/config.yaml` y ajustá las rutas y hiperparámetros según tu entorno. Los valores por defecto funcionan si respetás la estructura de carpetas anterior.
+
+ 
