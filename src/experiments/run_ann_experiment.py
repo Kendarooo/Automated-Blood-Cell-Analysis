@@ -6,13 +6,13 @@ from typing import Any
 
 import numpy as np
 import torch
-import wandb
 from torch.utils.data import DataLoader, TensorDataset
 
 from src.experiments.evaluation import MulticlassEvaluator
 from src.experiments.feature_pipeline import PreparedFeatureSplits
 from src.experiments.run_persistence import build_run_id, persist_run
 from src.training.train_ann import ANNTrainer
+from src.utils.wandb_logger import WandBLogger
 
 
 def run_ann_experiment(
@@ -21,7 +21,6 @@ def run_ann_experiment(
 ) -> dict[str, object]:
     """Run one ANN experiment over precomputed train/validation features."""
     use_wandb = bool(merged_cfg.get("wandb", {}).get("enabled", False))
-    started_wandb_run = False
     ann_cfg = merged_cfg.get("ann", {})
     batch_size = int(merged_cfg.get("dataset", {}).get("batch_size", 32))
     epochs = int(ann_cfg.get("epochs", 1))
@@ -38,21 +37,7 @@ def run_ann_experiment(
         "dimensionality_strategy": prepared.metadata.dimensionality_strategy,
     }
 
-    if use_wandb and wandb.run is None:
-        wandb_cfg = merged_cfg.get("wandb", {})
-        wandb.init(
-            project=wandb_cfg.get("project"),
-            entity=wandb_cfg.get("entity"),
-            name=wandb_cfg.get("run_name"),
-            settings=wandb.Settings(x_disable_viewer=True, silent=True),
-            config={
-                "ann": ann_cfg,
-                "dataset": {"batch_size": batch_size},
-                "device": device,
-                "feature_metadata": feature_metadata,
-            },
-        )
-        started_wandb_run = True
+    logger = WandBLogger(merged_cfg) if use_wandb else None
 
     train_loader = _build_dataloader(
         features=prepared.train.features,
@@ -72,19 +57,42 @@ def run_ann_experiment(
         input_dim=prepared.metadata.feature_dim,
         device=device,
     )
+    evaluator = MulticlassEvaluator(prepared.metadata.class_names)
 
     train_loss = 0.0
-    for _ in range(epochs):
-        train_loss = trainer.train_one_epoch(train_loader)
-
     val_summary = trainer.evaluate(val_loader)
-    predictions = _predict_labels(
-        trainer=trainer,
-        features=prepared.val.features,
-        device=device,
+    metrics = evaluator.evaluate(
+        prepared.val.labels,
+        _predict_labels(
+            trainer=trainer,
+            features=prepared.val.features,
+            device=device,
+        ),
     )
-    evaluator = MulticlassEvaluator(prepared.metadata.class_names)
-    metrics = evaluator.evaluate(prepared.val.labels, predictions)
+    for epoch in range(epochs):
+        train_loss = trainer.train_one_epoch(train_loader)
+        val_summary = trainer.evaluate(val_loader)
+        predictions = _predict_labels(
+            trainer=trainer,
+            features=prepared.val.features,
+            device=device,
+        )
+        metrics = evaluator.evaluate(prepared.val.labels, predictions)
+        if logger is not None:
+            epoch_payload: dict[str, object] = {
+                "epoch": epoch,
+                "train_loss": float(train_loss),
+                "val_loss": float(val_summary["loss"]),
+                "val_accuracy": float(metrics.accuracy),
+                "val_macro_f1": float(metrics.macro_f1),
+            }
+            for class_name, value in metrics.precision_per_class.items():
+                epoch_payload[f"val_precision_{class_name}"] = float(value)
+            for class_name, value in metrics.recall_per_class.items():
+                epoch_payload[f"val_recall_{class_name}"] = float(value)
+
+            logger.log(epoch_payload, step=epoch)
+
     metrics_payload = {
         "train_loss": float(train_loss),
         "val_loss": float(val_summary["loss"]),
@@ -101,7 +109,7 @@ def run_ann_experiment(
         "epochs": epochs,
     }
 
-    if use_wandb:
+    if logger is not None:
         log_payload: dict[str, object] = {
             "train_loss": result["train_loss"],
             "val_loss": result["val_loss"],
@@ -114,9 +122,8 @@ def run_ann_experiment(
         for class_name, value in metrics.recall_per_class.items():
             log_payload[f"val_recall_{class_name}"] = float(value)
 
-        wandb.log(log_payload)
-        if started_wandb_run:
-            wandb.finish()
+        logger.log(log_payload, step=epochs - 1 if epochs > 0 else None)
+        logger.finish()
 
     from pathlib import Path
 

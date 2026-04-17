@@ -2,7 +2,7 @@ wandb:
   enabled: true
   project: "bccd-t2-ak"
   entity: "t2-ak-tec"
-  run_name: "ann-final-fr13"
+  run_name: "ann-epoch-metrics-curves"
 
 detection:
   # Pesos de inicio para fine-tuning (YOLO26s preentrenado en COCO).

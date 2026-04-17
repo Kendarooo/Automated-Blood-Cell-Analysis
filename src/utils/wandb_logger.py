@@ -19,15 +19,20 @@ class WandBLogger:
         self._enabled = bool(wandb_cfg.get("enabled", True))
 
         self._run = None
+        self._owns_run = False
         if self._enabled:
-            self._run = wandb.init(
-                project=wandb_cfg["project"],
-                entity=wandb_cfg.get("entity"),
-                name=run_name or wandb_cfg.get("run_name"),
-                config=cfg,
-                reinit=True,
-                settings=wandb.Settings(x_disable_viewer=True, silent=True),
-            )
+            if wandb.run is not None:
+                self._run = wandb.run
+            else:
+                self._run = wandb.init(
+                    project=wandb_cfg["project"],
+                    entity=wandb_cfg.get("entity"),
+                    name=run_name or wandb_cfg.get("run_name"),
+                    config=cfg,
+                    reinit=True,
+                    settings=wandb.Settings(x_disable_viewer=True, silent=True),
+                )
+                self._owns_run = True
     # ------------------------------------------------------------------
     # Public interface
     # ------------------------------------------------------------------
@@ -55,7 +60,7 @@ class WandBLogger:
             )
     def finish(self) -> None:
         """Close the W&B run cleanly."""
-        if self._run is not None:
+        if self._run is not None and self._owns_run:
             self._run.finish()
 
     @property
