@@ -9,7 +9,7 @@
 
 command:
   - ${env}
-  - ${interpreter}
+  - ./.venv/bin/python
   - -m
   - src.experiments.cli
   - --runner
@@ -31,7 +31,7 @@ parameters:
     value: bccd-t2-ak
 
   wandb.run_name:
-    value: svm-sweep
+    value: svm-rbf-c-gamma-sweep
 
   extractor.projection_dim:
     value: null
@@ -40,10 +40,10 @@ parameters:
     value: none
 
   svm.kernel:
-    values: ["linear", "rbf"]
+    value: "rbf"
 
   svm.C:
     values: [0.1, 1.0, 10.0]
 
   svm.gamma:
-    value: "scale"
+    values: ["scale", 0.1, 1.0]

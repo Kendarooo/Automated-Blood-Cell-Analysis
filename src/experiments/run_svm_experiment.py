@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import wandb
 import joblib
 
 from src.experiments.evaluation import MulticlassEvaluator
@@ -12,6 +11,7 @@ from src.experiments.feature_pipeline import PreparedFeatureSplits
 from src.experiments.run_persistence import build_run_id, persist_run
 from src.models.svm_model import SVMConfig
 from src.training.train_svm import DatasetSplit, SVMTrainer
+from src.utils.wandb_logger import WandBLogger
 
 
 def run_svm_experiment(
@@ -20,7 +20,6 @@ def run_svm_experiment(
 ) -> dict[str, object]:
     """Run one SVM experiment over precomputed train/validation features."""
     use_wandb = bool(merged_cfg.get("wandb", {}).get("enabled", False))
-    started_wandb_run = False
     svm_cfg = merged_cfg.get("svm", {})
     has_point_config = all(
         key in svm_cfg for key in ("kernel", "C", "gamma")
@@ -35,20 +34,7 @@ def run_svm_experiment(
         "normalization_enabled": prepared.metadata.normalization_enabled,
         "dimensionality_strategy": prepared.metadata.dimensionality_strategy,
     }
-
-    if use_wandb and wandb.run is None:
-        wandb_cfg = merged_cfg.get("wandb", {})
-        wandb.init(
-            project=wandb_cfg.get("project"),
-            entity=wandb_cfg.get("entity"),
-            name=wandb_cfg.get("run_name"),
-            settings=wandb.Settings(x_disable_viewer=True, silent=True),
-            config={
-                "svm": svm_cfg,
-                "feature_metadata": feature_metadata,
-            },
-        )
-        started_wandb_run = True
+    logger = WandBLogger(merged_cfg) if use_wandb else None
 
     train_split = DatasetSplit(
         features=prepared.train.features,
@@ -60,6 +46,7 @@ def run_svm_experiment(
     )
 
     trainer = SVMTrainer()
+    evaluator = MulticlassEvaluator(prepared.metadata.class_names)
     if has_point_config:
         trained_runs = [
             trainer._validator.train_and_evaluate(  # noqa: SLF001
@@ -83,9 +70,29 @@ def run_svm_experiment(
             gamma_values=gamma_values,
         )
         best_run = trainer.select_best_trained(trained_runs)
+    if logger is not None:
+        for config_index, trained_run in enumerate(trained_runs):
+            candidate_predictions = trained_run.classifier.predict(val_split.features)
+            candidate_metrics = evaluator.evaluate(
+                prepared.val.labels,
+                candidate_predictions,
+            )
+            config_payload: dict[str, object] = {
+                "config_step": config_index,
+                "val_accuracy": float(candidate_metrics.accuracy),
+                "val_macro_f1": float(candidate_metrics.macro_f1),
+                "svm_kernel": trained_run.result.kernel,
+                "svm_c_value": float(trained_run.result.c_value),
+                "svm_gamma": trained_run.result.gamma,
+            }
+            for class_name, value in candidate_metrics.precision_per_class.items():
+                config_payload[f"val_precision_{class_name}"] = float(value)
+            for class_name, value in candidate_metrics.recall_per_class.items():
+                config_payload[f"val_recall_{class_name}"] = float(value)
+            logger.log(config_payload, step=config_index)
+
     predictions = best_run.classifier.predict(val_split.features)
 
-    evaluator = MulticlassEvaluator(prepared.metadata.class_names)
     metrics = evaluator.evaluate(prepared.val.labels, predictions)
     metrics_payload = {
         "val_accuracy": float(metrics.accuracy),
@@ -103,7 +110,7 @@ def run_svm_experiment(
         "feature_metadata": feature_metadata,
     }
 
-    if use_wandb:
+    if logger is not None:
         log_payload: dict[str, object] = {
             "val_accuracy": result["val_accuracy"],
             "val_macro_f1": result["val_macro_f1"],
@@ -118,9 +125,8 @@ def run_svm_experiment(
         for class_name, value in metrics.recall_per_class.items():
             log_payload[f"val_recall_{class_name}"] = float(value)
 
-        wandb.log(log_payload)
-        if started_wandb_run:
-            wandb.finish()
+        logger.log(log_payload, step=len(trained_runs) - 1 if trained_runs else None)
+        logger.finish()
 
     from pathlib import Path
 
