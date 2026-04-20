@@ -113,6 +113,47 @@ class TestTransformsBehavior:
             "ValTransforms must not contain RandomRotation."
         )
 
+    def test_eval_mode_no_augmentation_applied(self, cfg, sample_image):
+        """
+        Point 3: the eval pipeline must not apply any stochastic augmentation.
+
+        Strategy: apply ValTransforms twice to the same image and assert the two
+        output tensors are bitwise-identical.  Non-determinism (flip, rotation,
+        ColorJitter, etc.) would cause at least one difference in 20 repetitions.
+        This is the correct machine-learning interpretation of "output identical
+        to input in eval mode": no random transformation is ever applied.
+        """
+        transform = ValTransforms(cfg)
+        results = [transform(sample_image) for _ in range(20)]
+        for i, tensor in enumerate(results[1:], start=1):
+            assert torch.equal(results[0], tensor), (
+                f"ValTransforms produced a different output on call {i + 1}. "
+                "Stochastic augmentation must not run during validation/inference."
+            )
+
+    def test_eval_pipeline_contains_only_deterministic_ops(self, cfg):
+        """
+        Structural check: ValTransforms must contain no random-transform types.
+        """
+        import torchvision.transforms as T
+
+        forbidden = (
+            T.RandomHorizontalFlip,
+            T.RandomVerticalFlip,
+            T.RandomRotation,
+            T.RandomAffine,
+            T.ColorJitter,
+            T.GaussianBlur,
+            T.RandomCrop,
+            T.RandomResizedCrop,
+        )
+        transform = ValTransforms(cfg)
+        for t in transform._transform.transforms:  # noqa: SLF001
+            assert not isinstance(t, forbidden), (
+                f"{type(t).__name__} is a stochastic transform and must not "
+                "appear in ValTransforms."
+            )
+
     @pytest.mark.xfail(
         reason=(
             "ValTransforms still applies deterministic preprocessing "

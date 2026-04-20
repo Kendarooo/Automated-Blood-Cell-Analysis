@@ -11,7 +11,22 @@ from __future__ import annotations
 
 from typing import Any
 
+import torch
 import torchvision.transforms as T
+
+
+class _AddGaussianNoise:
+    """Additive Gaussian noise on a float tensor (applied after ToTensor).
+
+    Operates on the normalised tensor so the noise scale is independent
+    of the pixel range.  std=0.02 adds ~5 % of the typical signal range.
+    """
+
+    def __init__(self, std: float) -> None:
+        self._std = std
+
+    def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
+        return tensor + torch.randn_like(tensor) * self._std
 
 
 class TrainTransforms:
@@ -66,6 +81,7 @@ class TrainTransforms:
                 sigma=aug.get("blur_sigma", (0.1, 0.5)),
             ),
             T.ToTensor(),
+            _AddGaussianNoise(std=aug.get("gaussian_noise_std", 0.02)),
             T.Normalize(
                 mean=aug.get("normalize_mean", [0.485, 0.456, 0.406]),
                 std=aug.get("normalize_std", [0.229, 0.224, 0.225]),
