@@ -10,6 +10,8 @@ import csv
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from ultralytics import YOLO
 from ultralytics.utils.callbacks.wb import callbacks as yolo_wb_callbacks
 
@@ -67,6 +69,7 @@ class YOLOTrainer:  # pylint: disable=too-many-instance-attributes,too-few-publi
         self._batch: int = detection_cfg["batch"]
         self._lr0: float = detection_cfg["lr0"]
         self._output_dir: Path = Path(detection_cfg["output_dir"])
+        self._yolo_model: YOLO | None = None  # set in train(), used in _on_epoch_end
 
     # ------------------------------------------------------------------
     # Public interface
@@ -80,6 +83,7 @@ class YOLOTrainer:  # pylint: disable=too-many-instance-attributes,too-few-publi
             Path to the best weights saved by YOLO.
         """
         model = self._factory.build(self._weights)
+        self._yolo_model = model
 
         # Register W&B callbacks so YOLO streams metrics automatically.
         for event, cb in yolo_wb_callbacks.items():
@@ -88,17 +92,24 @@ class YOLOTrainer:  # pylint: disable=too-many-instance-attributes,too-few-publi
         # Forward metrics through our WandBLogger on every epoch end.
         model.add_callback("on_fit_epoch_end", self._on_epoch_end)
 
-        model.train(
-            data=self._data_yaml,
-            epochs=self._epochs,
-            imgsz=self._imgsz,
-            batch=self._batch,
-            lr0=self._lr0,
-            project=str(self._output_dir),
-            name="yolo_finetune",
-            exist_ok=True,
-            verbose=True,
-        )
+        # Use a train-only YAML so YOLO's internal loop never touches
+        # valid/ or test/ images — actual val mAP is computed explicitly
+        # in _on_epoch_end using the original data yaml.
+        train_only_yaml = self._make_train_only_yaml()
+        try:
+            model.train(
+                data=str(train_only_yaml),
+                epochs=self._epochs,
+                imgsz=self._imgsz,
+                batch=self._batch,
+                lr0=self._lr0,
+                project=str(self._output_dir),
+                name="yolo_finetune",
+                exist_ok=True,
+                verbose=True,
+            )
+        finally:
+            train_only_yaml.unlink(missing_ok=True)
 
         save_dir = Path(model.trainer.save_dir)
         self._log_results_csv(save_dir / "results.csv")
@@ -106,16 +117,52 @@ class YOLOTrainer:  # pylint: disable=too-many-instance-attributes,too-few-publi
         return best_weights
 
     # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
+
+    def _make_train_only_yaml(self) -> Path:
+        """Write a sibling YAML that exposes only train/images to YOLO.
+
+        Ultralytics requires a 'val' key; we deliberately point it to the
+        same train path so YOLO's internal validation loop never loads
+        held-out images.  Actual val-split mAP is evaluated explicitly in
+        _on_epoch_end using self._data_yaml (the original full YAML).
+        """
+        original = yaml.safe_load(Path(self._data_yaml).read_text(encoding="utf-8"))
+        train_path = original["train"]
+        train_only = {
+            "train": train_path,
+            "val":   train_path,   # intentionally points to train only
+            "nc":    original["nc"],
+            "names": original["names"],
+        }
+        out_path = Path(self._data_yaml).parent / "_train_only.yaml"
+        out_path.write_text(yaml.dump(train_only), encoding="utf-8")
+        return out_path
+
+    # ------------------------------------------------------------------
     # Private callbacks
     # ------------------------------------------------------------------
 
     def _on_epoch_end(self, trainer: Any) -> None:  # noqa: ANN401
+        """Callback invoked by YOLO after every epoch.
+
+        Train losses come from trainer.metrics (computed on train split).
+        Val mAP is obtained by running an explicit evaluation pass on the
+        held-out valid/ split via self._data_yaml — guaranteeing that no
+        validation image is ever seen during the weight-update phase.
         """
-        Callback invoked by YOLO after every epoch.
-        Forwards mAP and loss metrics to W&B via the injected logger.
-        """
-        metrics: dict[str, float] = trainer.metrics
         epoch: int = trainer.epoch
+        metrics: dict[str, float] = trainer.metrics
+
+        # Explicit evaluation on the held-out val split.
+        # YOLO.val() sets the model to eval mode and uses torch.no_grad().
+        val_results = self._yolo_model.val(  # type: ignore[union-attr]
+            data=self._data_yaml,
+            split="val",
+            verbose=False,
+            plots=False,
+        )
 
         self._logger.log(
             {
@@ -123,13 +170,10 @@ class YOLOTrainer:  # pylint: disable=too-many-instance-attributes,too-few-publi
                 "train/box_loss": metrics.get("train/box_loss"),
                 "train/cls_loss": metrics.get("train/cls_loss"),
                 "train/dfl_loss": metrics.get("train/dfl_loss"),
-                "val/box_loss": metrics.get("val/box_loss"),
-                "val/cls_loss": metrics.get("val/cls_loss"),
-                "val/dfl_loss": metrics.get("val/dfl_loss"),
-                "val/mAP50": metrics.get("metrics/mAP50"),
-                "val/mAP50-95": metrics.get("metrics/mAP50-95"),
-                "val/precision": metrics.get("metrics/precision"),
-                "val/recall": metrics.get("metrics/recall"),
+                "val/mAP50":      val_results.box.map50,
+                "val/mAP50-95":   val_results.box.map,
+                "val/precision":  val_results.box.mp,
+                "val/recall":     val_results.box.mr,
             },
             step=epoch,
         )
