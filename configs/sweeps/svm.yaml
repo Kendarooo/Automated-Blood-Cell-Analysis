@@ -1,0 +1,49 @@
+# FR-11 SVM sweep configuration.
+# Uses point-config mode in src/experiments/run_svm_experiment.py
+# so each W&B run evaluates exactly one SVM configuration.
+# Small, systematic grid over core SVM hyperparameters on the settled
+# "no projection" protocol used for the final comparison.
+# Launch with a bounded agent invocation, e.g.:
+#   ./.venv/bin/wandb sweep configs/sweeps/svm.yaml
+#   ./.venv/bin/wandb agent --count 6 t2-ak-tec/bccd-t2-ak/<SWEEP_ID>
+
+command:
+  - ${env}
+  - ./.venv/bin/python
+  - -m
+  - src.experiments.cli
+  - --runner
+  - svm
+method: grid
+
+metric:
+  name: val_macro_f1
+  goal: maximize
+
+parameters:
+  wandb.enabled:
+    value: true
+
+  wandb.entity:
+    value: t2-ak-tec
+
+  wandb.project:
+    value: bccd-t2-ak
+
+  wandb.run_name:
+    value: svm-rbf-c-gamma-sweep
+
+  extractor.projection_dim:
+    value: null
+
+  feature_pipeline.dimensionality_strategy:
+    value: none
+
+  svm.kernel:
+    value: "rbf"
+
+  svm.C:
+    values: [0.1, 1.0, 10.0]
+
+  svm.gamma:
+    values: ["scale", 0.1, 1.0]

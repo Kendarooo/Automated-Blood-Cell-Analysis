@@ -1,0 +1,59 @@
+# FR-11 ANN sweep configuration.
+# Small, systematic grid over ANN hyperparameters on the settled
+# "no projection" protocol used for the final comparison.
+# Launch with a bounded agent invocation, e.g.:
+#   ./.venv/bin/wandb sweep configs/sweeps/ann.yaml
+#   ./.venv/bin/wandb agent --count 4 t2-ak-tec/bccd-t2-ak/<SWEEP_ID>
+
+command:
+  - ${env}
+  - ./.venv/bin/python
+  - -m
+  - src.experiments.cli
+  - --runner
+  - ann
+method: grid
+
+metric:
+  name: val_macro_f1
+  goal: maximize
+
+parameters:
+  wandb.enabled:
+    value: true
+
+  wandb.entity:
+    value: t2-ak-tec
+
+  wandb.project:
+    value: bccd-t2-ak
+
+  wandb.run_name:
+    value: ann-hparam-sweep
+
+  extractor.projection_dim:
+    value: null
+
+  feature_pipeline.dimensionality_strategy:
+    value: none
+
+  ann.hidden_dims:
+    values:
+      - [64, 32]
+      - [128, 64]
+      - [256, 128]
+
+  ann.dropout:
+    values: [0.3, 0.5, 0.6]
+
+  ann.lr:
+    values: [0.0001, 0.0003, 0.001]
+
+  ann.weight_decay:
+    values: [0.0, 0.0001, 0.001]
+
+  ann.epochs:
+    value: 10
+
+  dataset.batch_size:
+    value: 32
