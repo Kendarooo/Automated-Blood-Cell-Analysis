@@ -3,7 +3,50 @@
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
+from src.models.ann import ANNArchitectureConfig, BloodCellANN
 from src.training.train_ann import ANNTrainer
+
+
+def test_fr8_one_step_all_params_have_nonzero_gradients() -> None:
+    """
+    FR-8: after ONE explicit optimisation step the gradient of EVERY
+    trainable parameter must be non-zero.
+
+    Dropout is set to 0.0 so no units are masked; all paths are active
+    and every weight must receive signal from backward().
+    """
+    K = 32   # arbitrary feature dimensionality
+    architecture = ANNArchitectureConfig(
+        input_dim=K,
+        hidden_dims=(64, 32),
+        dropout=0.0,       # no masking → all gradients populated
+        num_classes=3,
+    )
+    model = BloodCellANN(architecture)
+    criterion = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+
+    # Synthetic batch: 12 samples covering all 3 classes
+    X = torch.randn(12, K)
+    y = torch.tensor([0, 1, 2] * 4, dtype=torch.long)
+
+    # --- Explicit optimisation step (FR-8 requirement) ---
+    model.train()
+    optimizer.zero_grad()
+    predictions = model(X)                   # a) forward pass
+    loss = criterion(predictions, y)         # b) cross-entropy loss
+    loss.backward()                          # c) backprop
+    optimizer.step()                         # d) weight update
+
+    assert loss.item() > 0.0, "Loss must be positive."
+
+    for name, param in model.named_parameters():
+        assert param.grad is not None, (
+            f"Parameter '{name}' has no gradient after backward()."
+        )
+        assert torch.any(param.grad != 0), (
+            f"Parameter '{name}' has an all-zero gradient after backward()."
+        )
 
 
 def test_ann_training_produces_nonzero_gradients() -> None:
