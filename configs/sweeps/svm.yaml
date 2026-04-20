@@ -33,6 +33,9 @@ parameters:
   wandb.run_name:
     value: svm-rbf-c-gamma-sweep
 
+  extractor.truncate_at:
+    values: ["layer2", "layer3", "layer4"]
+
   extractor.projection_dim:
     value: null
 
