@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from PIL import Image
 
-from src.data.transforms import ValTransforms
+from src.data.transforms import TrainTransforms, ValTransforms
 
 
 SUPPORTED_IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png", ".bmp")
@@ -31,7 +31,17 @@ class BCCDYoloSplitLoader:
     """Load BCCD train/val splits by cropping annotated cells in memory."""
 
     def __init__(self, cfg: dict[str, Any]) -> None:
-        self._transform = ValTransforms(cfg)
+        self._train_transform = TrainTransforms(cfg)
+        self._val_transform = ValTransforms(cfg)
+        self._train_dir = Path(cfg.get("dataset", {}).get("train_dir", "data/bccd/train"))
+
+    def _get_transform(self, split_dir: Path) -> TrainTransforms | ValTransforms:
+        """Return TrainTransforms for the train split, ValTransforms otherwise."""
+        return (
+            self._train_transform
+            if Path(split_dir) == self._train_dir
+            else self._val_transform
+        )
 
     def load_split(
         self,
@@ -47,6 +57,7 @@ class BCCDYoloSplitLoader:
                 f"Expected YOLO split directories '{images_dir}' and '{labels_dir}'."
             )
 
+        transform = self._get_transform(split_dir)
         crops: list[torch.Tensor] = []
         labels: list[int] = []
 
@@ -69,7 +80,7 @@ class BCCDYoloSplitLoader:
                     crop = image.crop(
                         (annotation.x1, annotation.y1, annotation.x2, annotation.y2)
                     )
-                    crops.append(self._transform(crop))
+                    crops.append(transform(crop))
                     labels.append(annotation.class_id)
 
         if not crops:
@@ -92,6 +103,7 @@ class BCCDYoloSplitLoader:
                 f"Expected YOLO split directories '{images_dir}' and '{labels_dir}'."
             )
 
+        transform = self._get_transform(split_dir)
         batch_crops: list[torch.Tensor] = []
         batch_labels: list[int] = []
         yielded_any = False
@@ -115,7 +127,7 @@ class BCCDYoloSplitLoader:
                     crop = image.crop(
                         (annotation.x1, annotation.y1, annotation.x2, annotation.y2)
                     )
-                    batch_crops.append(self._transform(crop))
+                    batch_crops.append(transform(crop))
                     batch_labels.append(annotation.class_id)
 
                     if len(batch_crops) >= batch_size:

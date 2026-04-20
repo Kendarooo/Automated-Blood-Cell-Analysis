@@ -63,6 +63,7 @@ augmentation:
   # Noise
   blur_kernel_size: 3
   blur_sigma: [0.1, 0.5]
+  gaussian_noise_std: 0.02
 
   # Normalization (ImageNet stats)
   normalize_mean: [0.485, 0.456, 0.406]
