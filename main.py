@@ -1,5 +1,4 @@
-def main():
-    print("Hello from tarea-2-t2-ak!")
+from src.main import main
 
 
 if __name__ == "__main__":

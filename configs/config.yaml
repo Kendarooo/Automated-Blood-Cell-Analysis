@@ -42,6 +42,7 @@ dataset:
 
 outputs:
   runs_dir: "outputs/runs"
+  inference_dir: "outputs/inference"
 
 augmentation:
   # Geometric (aggressive)
@@ -95,3 +96,5 @@ inference:
   min_cells_for_test: 5
   min_expected_count: 1.0
   test_type: "chi_square"
+  baseline_path: "outputs/inference/baseline.json"
+  normalizer_path: "outputs/features/normalizer.npz"
