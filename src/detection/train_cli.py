@@ -64,6 +64,8 @@ def main(argv: list[str] | None = None) -> dict[str, Any]:
     result = {
         "best_weights": str(best_weights),
         "best_weights_exists": Path(best_weights).exists(),
+        "run_summary_path": str(best_weights.parent.parent / "run_summary.json"),
+        "effective_config_path": str(best_weights.parent.parent / "effective_config.json"),
         "data_yaml": detection_cfg.get("data_yaml"),
         "weights": detection_cfg.get("weights"),
         "epochs": detection_cfg.get("epochs"),

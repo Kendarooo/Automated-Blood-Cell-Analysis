@@ -14,6 +14,8 @@ from src.experiments.feature_pipeline import (
     FeatureSplit,
     PreparedFeatureSplits,
 )
+from src.experiments.run_persistence import persist_run
+from src.models.ann import ANNFactory
 from src.experiments.run_ann_experiment import run_ann_experiment
 from src.experiments.run_svm_experiment import run_svm_experiment
 from src.inference.run_loader import load_run
@@ -116,6 +118,84 @@ def test_load_run_restores_ann_model_without_retraining(tmp_path: Path) -> None:
     assert loaded.model.training is False
     logits = loaded.model(torch.tensor(prepared.val.features, dtype=torch.float32))
     assert logits.shape == (3, 3)
+
+
+def test_load_run_restores_identical_ann_predictions_from_saved_state_dict(
+    tmp_path: Path,
+) -> None:
+    """Saving ANN weights plus config must reproduce identical predictions after loading."""
+    torch.manual_seed(7)
+    features = torch.tensor(
+        [
+            [0.0, 0.1, 0.0, 0.1],
+            [0.2, 0.1, 0.2, 0.1],
+            [1.0, 1.1, 1.0, 1.1],
+            [1.1, 1.0, 1.2, 1.0],
+            [2.0, 2.1, 2.0, 2.1],
+            [2.2, 2.0, 2.1, 2.0],
+        ],
+        dtype=torch.float32,
+    )
+    labels = torch.tensor([0, 0, 1, 1, 2, 2], dtype=torch.long)
+
+    effective_config = {
+        "ann": {
+            "hidden_dims": [6],
+            "dropout": 0.0,
+            "lr": 0.05,
+            "weight_decay": 0.0,
+            "num_classes": 3,
+            "epochs": 5,
+        },
+        "dataset": {"batch_size": 2},
+    }
+    feature_metadata = {
+        "class_names": ["Platelets", "RBC", "WBC"],
+        "feature_dim": 4,
+        "truncate_at": "layer3",
+        "projection_dim": None,
+        "normalization_enabled": True,
+        "dimensionality_strategy": "none",
+    }
+
+    model = ANNFactory.from_project_config(effective_config, input_dim=4)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
+    criterion = torch.nn.CrossEntropyLoss()
+
+    model.train()
+    for _ in range(5):
+        optimizer.zero_grad()
+        logits = model(features)
+        loss = criterion(logits, labels)
+        loss.backward()
+        optimizer.step()
+
+    model.eval()
+    with torch.no_grad():
+        predictions_before = model(features).argmax(dim=1).cpu().numpy()
+
+    run_id = "ann_manual_restore"
+    run_dir = tmp_path / run_id
+    model_path = run_dir / "model.pt"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    torch.save(model.state_dict(), model_path)
+
+    persist_run(
+        run_id=run_id,
+        classifier_name="ann",
+        output_root=tmp_path,
+        effective_config=effective_config,
+        metrics={"val_macro_f1": 0.0, "val_accuracy": 0.0},
+        feature_metadata=feature_metadata,
+        model_path=model_path,
+    )
+
+    loaded = load_run(run_dir)
+    loaded.model.eval()
+    with torch.no_grad():
+        predictions_after = loaded.model(features).argmax(dim=1).cpu().numpy()
+
+    np.testing.assert_array_equal(predictions_before, predictions_after)
 
 
 def test_load_run_restores_svm_model_without_retraining(tmp_path: Path) -> None:

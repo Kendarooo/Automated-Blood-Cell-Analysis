@@ -7,6 +7,8 @@
 from __future__ import annotations
 
 import csv
+import json
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -60,6 +62,7 @@ class YOLOTrainer:  # pylint: disable=too-many-instance-attributes,too-few-publi
         """
         self._logger = logger
         self._factory = model_factory or YOLOModelFactory()
+        self._cfg = deepcopy(cfg)
 
         detection_cfg: dict[str, Any] = cfg["detection"]
         self._weights: str = detection_cfg["weights"]
@@ -114,6 +117,7 @@ class YOLOTrainer:  # pylint: disable=too-many-instance-attributes,too-few-publi
         save_dir = Path(model.trainer.save_dir)
         self._log_results_csv(save_dir / "results.csv")
         best_weights = save_dir / "weights" / "best.pt"
+        self._persist_run_artifacts(save_dir=save_dir, best_weights=best_weights)
         return best_weights
 
     # ------------------------------------------------------------------
@@ -224,3 +228,25 @@ class YOLOTrainer:  # pylint: disable=too-many-instance-attributes,too-few-publi
             payload[log_key] = float(value)
 
         return payload
+
+    def _persist_run_artifacts(self, *, save_dir: Path, best_weights: Path) -> None:
+        """Persist the exact detector config next to the trained YOLO weights."""
+        config_path = save_dir / "effective_config.json"
+        summary_path = save_dir / "run_summary.json"
+        payload = {
+            "detector_name": "yolo",
+            "best_weights": str(best_weights),
+            "local_artifact_paths": {
+                "weights": str(best_weights),
+                "config": str(config_path),
+            },
+            "effective_config": self._cfg,
+        }
+        config_path.write_text(
+            json.dumps(self._cfg, indent=2),
+            encoding="utf-8",
+        )
+        summary_path.write_text(
+            json.dumps(payload, indent=2),
+            encoding="utf-8",
+        )
