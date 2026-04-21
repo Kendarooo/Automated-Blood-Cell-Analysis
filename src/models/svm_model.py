@@ -1,4 +1,5 @@
 """SVM model construction for multiclass blood-cell classification (FR-9)."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 

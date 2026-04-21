@@ -1,4 +1,5 @@
 """Run restoration utilities for persisted FR-13 experiment artifacts."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 

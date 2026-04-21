@@ -1,4 +1,5 @@
 """Restoration helpers for persisted YOLO detector runs."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 

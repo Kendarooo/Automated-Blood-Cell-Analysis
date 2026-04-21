@@ -1,4 +1,5 @@
 """ANN experiment runner for FR-11 sweeps."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 
@@ -27,7 +28,6 @@ def run_ann_experiment(
     device = str(merged_cfg.get("device", "cpu"))
     output_root = merged_cfg.get("outputs", {}).get("runs_dir", "outputs/runs")
     run_id = build_run_id("ann")
-    output_dir = torch.path.Path(output_root) / run_id if hasattr(torch, "path") else None
     feature_metadata = {
         "class_names": list(prepared.metadata.class_names),
         "feature_dim": prepared.metadata.feature_dim,
@@ -123,6 +123,11 @@ def run_ann_experiment(
             log_payload[f"val_recall_{class_name}"] = float(value)
 
         logger.log(log_payload, step=epochs - 1 if epochs > 0 else None)
+        logger.log_confusion_matrix(
+            labels=list(prepared.metadata.class_names),
+            y_true=prepared.val.labels.tolist(),
+            preds=predictions.tolist(),
+        )
         logger.finish()
 
     from pathlib import Path

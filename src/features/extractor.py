@@ -5,6 +5,7 @@ and its weights remain frozen throughout training (CON-4).
 Only ImageNet pretrained weights are used — no hematology-specific
 pretraining (CON-3).
 """
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 

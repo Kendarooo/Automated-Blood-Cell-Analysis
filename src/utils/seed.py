@@ -1,4 +1,10 @@
+"""Global random seed utilities for reproducibility."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
+
+from __future__ import annotations
+
 import random
+
 import numpy as np
 import torch
 

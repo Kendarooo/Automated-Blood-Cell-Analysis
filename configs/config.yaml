@@ -24,7 +24,7 @@ detection:
   lr0: 0.01
 
   # Hiperparámetros de inferencia.
-  conf_threshold: 0.5
+  conf_threshold: 0.4
   iou_threshold: 0.45
 
   # Tamaño uniforme de cada recorte celular (requerido por NFR-6a).

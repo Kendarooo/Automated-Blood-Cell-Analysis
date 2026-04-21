@@ -1,4 +1,5 @@
 """CLI entrypoint for FR-11 experiment runners."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 
@@ -110,8 +111,8 @@ def _set_nested_value(cfg: dict[str, Any], dotted_key: str, value: Any) -> None:
 def _prepare_features(cfg: dict[str, Any]):
     """Build prepared train/validation features directly from BCCD YOLO splits."""
     dataset_cfg = cfg.get("dataset", {})
-    train_dir = Path(dataset_cfg.get("train_dir", "data/train"))
-    val_dir = Path(dataset_cfg.get("val_dir", "data/val"))
+    train_dir = Path(dataset_cfg.get("train_dir", "data/bccd/train"))
+    val_dir = Path(dataset_cfg.get("val_dir", "data/bccd/valid"))
     class_names = tuple(dataset_cfg.get("class_names", DEFAULT_CLASS_NAMES))
     extractor_cfg = cfg.get("extractor", {})
     projection_dim = extractor_cfg.get("projection_dim")

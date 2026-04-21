@@ -171,3 +171,48 @@ class TestResNet18ExtractorDimensionality:
         extractor = ResNet18Extractor(self._make_cfg(base_cfg, "layer3"))
         for param in extractor._backbone.parameters():  # noqa: SLF001
             assert not param.requires_grad
+
+
+class TestCON4GradientIsolation:
+    """CON-4 — backbone grads are None after backward; projection grads are not."""
+
+    @pytest.fixture
+    def extractor_with_projection(self):
+        import torch
+        from src.features.extractor import ResNet18Extractor
+        cfg = {
+            "extractor": {"truncate_at": "layer3", "projection_dim": 64},
+            "augmentation": {
+                "normalize_mean": [0.485, 0.456, 0.406],
+                "normalize_std": [0.229, 0.224, 0.225],
+            },
+        }
+        extractor = ResNet18Extractor(cfg)
+        extractor.train()
+        return extractor
+
+    def test_backbone_grads_are_none_after_backward(self, extractor_with_projection):
+        """After a full forward+backward pass, backbone params must have grad=None."""
+        import torch
+        extractor = extractor_with_projection
+        x = torch.randn(2, 3, 224, 224)
+        loss = extractor(x).sum()
+        loss.backward()
+        for param in extractor._backbone.parameters():  # noqa: SLF001
+            assert param.grad is None, (
+                f"Backbone param {param.shape} has gradients — CON-4 violated."
+            )
+
+    def test_projection_grads_are_not_none_after_backward(self, extractor_with_projection):
+        """After a full forward+backward pass, projection params must have non-None grad."""
+        import torch
+        extractor = extractor_with_projection
+        x = torch.randn(2, 3, 224, 224)
+        loss = extractor(x).sum()
+        loss.backward()
+        projection_params = list(extractor._projection.parameters())  # noqa: SLF001
+        assert projection_params, "Projection layer has no parameters."
+        for param in projection_params:
+            assert param.grad is not None, (
+                f"Projection param {param.shape} has no gradient after backward."
+            )

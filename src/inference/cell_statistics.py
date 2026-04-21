@@ -1,4 +1,5 @@
 """Cell counting and proportion utilities for FR-10 statistical inference."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
 """Statistical anomaly detection for FR-10 clinical inference."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 
