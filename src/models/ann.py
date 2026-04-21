@@ -8,7 +8,8 @@ from dataclasses import dataclass
 import torch
 from torch import nn
 
-
+"""Estructura inmutable que define la topología y los hiperparámetros de la red 
+(dimensión de entrada, capas ocultas, dropout y número de clases)."""
 @dataclass(frozen=True)
 class ANNArchitectureConfig:  # pylint: disable=too-few-public-methods
     """Immutable ANN architecture configuration."""
@@ -18,7 +19,8 @@ class ANNArchitectureConfig:  # pylint: disable=too-few-public-methods
     dropout: float
     num_classes: int
 
-
+"""Clase fábrica (Factory) encargada exclusivamente de instanciar el modelo de 
+PyTorch mapeando los valores desde el diccionario de configuración del proyecto."""
 class ANNFactory:  # pylint: disable=too-few-public-methods
     """Factory responsible only for building ANN models from configuration."""
 
@@ -34,7 +36,9 @@ class ANNFactory:  # pylint: disable=too-few-public-methods
         )
         return BloodCellANN(architecture)
 
-
+"""Implementación de la red neuronal multiclase, que define la secuencia de capas 
+lineales, activaciones (ReLU), regularización (Dropout) y el cálculo de la 
+propagación hacia adelante (forward pass)."""
 class BloodCellANN(nn.Module):
     """
     Multiclass ANN classifier implemented in pure PyTorch.
