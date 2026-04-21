@@ -21,7 +21,8 @@ from src.pipeline_stages import (
 from src.utils.config import ensure_dir, load_config
 from src.utils.seed import set_seed
 
-
+"""Configura los argumentos de la terminal para definir la etapa del pipeline, 
+rutas de configuración y ejecución de sweeps."""
 def build_parser() -> argparse.ArgumentParser:
     """Build the project-level CLI parser."""
     parser = argparse.ArgumentParser(description="Run the BCCD pipeline stages.")
@@ -41,7 +42,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--baseline", default="outputs/inference/baseline.json")
     return parser
 
-
+"""Inicializa el entorno de ejecución (semilla, directorios, W&B) y delega el 
+flujo a la etapa solicitada, retornando los resultados en JSON."""
 def main(argv: list[str] | None = None) -> dict[str, object]:
     """Run the selected pipeline stage and print its structured result."""
     args = build_parser().parse_args(argv)
@@ -62,7 +64,8 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
         wandb.finish()
     return result
 
-
+"""Instancia y ejecuta la etapa específica seleccionada, gestionando el paso de 
+datos si se ejecutan múltiples etapas en secuencia ('all')."""
 def _dispatch_stage(cfg: dict[str, Any], args: argparse.Namespace) -> dict[str, object]:
     detector_stage = DetectorTrainingStage()
     feature_stage = FeatureExtractionStage()
@@ -125,7 +128,8 @@ def _dispatch_stage(cfg: dict[str, Any], args: argparse.Namespace) -> dict[str, 
 
     raise ValueError(f"Unsupported stage '{args.stage}'.")
 
-
+"""Inicia el seguimiento de experimentos en W&B y sobrescribe la configuración
+base con los parámetros del sweep actual si está activo."""
 def _apply_sweep_overrides(
     cfg: dict[str, Any],
     *,
@@ -146,7 +150,8 @@ def _apply_sweep_overrides(
     _merge_flattened_overrides(merged_cfg, dict(wandb.config))
     return merged_cfg, True
 
-
+"""Funciones utilitarias para inyectar valores de claves aplanadas (ej. 'param.subparam') 
+dentro de la jerarquía del diccionario de configuración."""
 def _merge_flattened_overrides(
     cfg: dict[str, Any],
     overrides: dict[str, Any],
@@ -169,7 +174,7 @@ def _set_nested_value(cfg: dict[str, Any], dotted_key: str, value: Any) -> None:
         cursor = next_value
     cursor[path[-1]] = value
 
-
+"""Valida que los argumentos obligatorios de la CLI estén presentes para evitar errores de ejecución."""
 def _require_argument(value: str | None, error_message: str) -> str:
     """Return an argument value or raise a clear CLI error."""
     if value is None:
