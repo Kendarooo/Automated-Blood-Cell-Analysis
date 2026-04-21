@@ -16,7 +16,7 @@ from src.data.transforms import TrainTransforms, ValTransforms
 
 SUPPORTED_IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png", ".bmp")
 
-
+"""Estructura inmutable para almacenar las coordenadas absolutas en píxeles de las cajas delimitadoras."""
 @dataclass(frozen=True)
 class YoloAnnotation:
     """One YOLO-format annotation already converted to absolute pixels."""
@@ -27,7 +27,8 @@ class YoloAnnotation:
     x2: int
     y2: int
 
-
+"""Inicializa el cargador y aplica las transformaciones de imagen correspondientes 
+según si es el set de entrenamiento o validación."""
 class BCCDYoloSplitLoader:
     """Load BCCD train/val splits by cropping annotated cells in memory."""
 
@@ -43,7 +44,8 @@ class BCCDYoloSplitLoader:
             if Path(split_dir) == self._train_dir
             else self._val_transform
         )
-
+    """Carga un split completo en memoria, recortando y transformando todas las 
+    células anotadas para retornar tensores listos."""
     def load_split(
         self,
         split_dir: Path,
@@ -88,7 +90,7 @@ class BCCDYoloSplitLoader:
             raise ValueError(f"No annotated cells found in split directory '{split_dir}'.")
 
         return torch.stack(crops), np.asarray(labels, dtype=np.int64)
-
+    """Generador que recorta y procesa las imágenes en lotes (batches) para evitar la saturación de la memoria RAM."""
     def iter_split_batches(
         self,
         split_dir: Path,
@@ -143,7 +145,7 @@ class BCCDYoloSplitLoader:
 
         if not yielded_any:
             raise ValueError(f"No annotated cells found in split directory '{split_dir}'.")
-
+    """Busca y retorna la ruta del archivo de imagen que corresponde exactamente al nombre del archivo de anotación."""
     @staticmethod
     def _find_matching_image(images_dir: Path, stem: str) -> Path | None:
         for suffix in SUPPORTED_IMAGE_SUFFIXES:
@@ -151,7 +153,8 @@ class BCCDYoloSplitLoader:
             if candidate.exists():
                 return candidate
         return None
-
+    """Lee los archivos de texto YOLO, valida sus datos y convierte las coordenadas 
+    relativas (centro, ancho, alto) a píxeles absolutos."""
     @staticmethod
     def _parse_annotations(
         label_path: Path,
