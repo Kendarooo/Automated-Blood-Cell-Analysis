@@ -59,4 +59,4 @@ parameters:
     value: 10
 
   dataset.batch_size:
-    value: 32
+    values: [16, 32, 64]
