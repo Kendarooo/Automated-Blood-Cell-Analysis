@@ -30,7 +30,8 @@ from src.utils.config import load_config
 
 BACKGROUND_LABEL = "__missing__"
 
-
+"""Configura los argumentos de la terminal para definir las rutas de los modelos, 
+directorios de prueba y los umbrales de evaluación (IoU y confianza)."""
 def build_parser() -> argparse.ArgumentParser:
     """Build CLI parser for label comparison over one full BCCD split."""
     parser = argparse.ArgumentParser(
@@ -45,7 +46,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--conf-threshold", type=float, default=None)
     return parser
 
-
+"""Orquesta la evaluación sobre todo el set de prueba, 
+generando reportes detallados por imagen y matrices de confusión (YOLO vs Real, Clasificador vs Real) 
+exportados en formato CSV y JSON."""
 def main(argv: list[str] | None = None) -> dict[str, object]:
     """Run label comparison over one full BCCD split."""
     args = build_parser().parse_args(argv)
@@ -140,7 +143,9 @@ def main(argv: list[str] | None = None) -> dict[str, object]:
     print(json.dumps(summary, indent=2, sort_keys=True))
     return summary
 
-
+"""Evalúa las predicciones contra las etiquetas reales (ground truth) de una sola 
+imagen basándose en el umbral de IoU, clasificando cada detección como 
+coincidencia, falso positivo o falso negativo."""
 def compare_image(
     *,
     image_path: Path,

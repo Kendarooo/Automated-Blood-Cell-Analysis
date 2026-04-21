@@ -17,7 +17,8 @@ if TYPE_CHECKING:
     from src.detection.yolo_infer import DetectionResult
     from src.inference.pipeline import InferenceResult
 
-
+"""Estructura inmutable que almacena el resultado de la comparación (coincidencia, 
+falsos positivos/negativos) y las métricas estadísticas para una predicción individual."""
 @dataclass(frozen=True)
 class MatchRecord:
     """One comparison record written into the evaluation CSV."""
@@ -33,7 +34,8 @@ class MatchRecord:
     alert: bool
     test_executed: bool
 
-
+"""Construye dinámicamente una matriz de confusión extrayendo las etiquetas 
+reales y predichas a partir de una lista de registros de evaluación."""
 def build_confusion_matrix(
     records: Iterable[MatchRecord],
     *,
@@ -54,7 +56,8 @@ def build_confusion_matrix(
         matrix[actual_getter(record)][predicted_getter(record)] += 1
     return labels, matrix
 
-
+"""Funciones de entrada/salida (I/O) dedicadas a persistir las matrices de confusión 
+y los registros detallados de cada imagen en archivos CSV."""
 def write_confusion_csv(
     path: Path,
     confusion: tuple[list[str], dict[str, dict[str, int]]],
@@ -94,7 +97,8 @@ def write_per_image_csv(path: Path, records: list[MatchRecord]) -> None:
                 "test_executed": record.test_executed,
             })
 
-
+"""Localiza y analiza los archivos de etiquetas YOLO, convirtiendo las coordenadas 
+relativas originales a cajas delimitadoras (GroundTruthBox) en píxeles absolutos."""
 def find_label_path(labels_dir: Path, stem: str) -> Path:
     """Resolve the label file path for a given image stem."""
     label_path = labels_dir / f"{stem}.txt"
@@ -134,7 +138,8 @@ def load_ground_truth_boxes(
         )
     return boxes
 
-
+"""Combina las cajas delimitadoras detectadas por YOLO con las clasificaciones 
+finales del pipeline en una única estructura de datos consolidada."""
 def build_predicted_boxes(
     detection_result: DetectionResult,
     inference_result: InferenceResult,
@@ -152,7 +157,8 @@ def build_predicted_boxes(
         )
     ]
 
-
+"""Agrega los resultados de la evaluación de una imagen específica (conteos de 
+aciertos, errores y valores de la prueba estadística) para generar el reporte final en JSON."""
 def summarize_image(image_path: Path, records: list[MatchRecord]) -> dict[str, object]:
     """Build a per-image summary dict for the JSON evaluation report."""
     return {

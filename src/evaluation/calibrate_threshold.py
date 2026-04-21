@@ -10,7 +10,8 @@ from pathlib import Path
 
 from src.evaluation.compare_labels import main as compare_labels_main
 
-
+"""Configura los parámetros de la terminal para definir los directorios de datos y la 
+lista de umbrales de confianza (thresholds) a evaluar."""
 def build_parser() -> argparse.ArgumentParser:
     """Build CLI parser for threshold calibration over validation data."""
     parser = argparse.ArgumentParser(
@@ -56,7 +57,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     return parser
 
-
+"""Calcula las métricas de rendimiento estándar (Precisión, Recall y F1-Score) a 
+partir de los conteos de verdaderos positivos, falsos positivos y falsos negativos."""
 def compute_detection_metrics(
     *,
     matched: int,
@@ -76,7 +78,8 @@ def compute_detection_metrics(
         "f1": f1,
     }
 
-
+"""Itera sobre los umbrales definidos, evalúa las predicciones contra las etiquetas 
+reales y determina el umbral óptimo maximizando el F1-Score, exportando los resultados."""
 def main(argv: list[str] | None = None) -> dict[str, object]:
     """Evaluate multiple YOLO confidence thresholds and select the best by F1."""
     args = build_parser().parse_args(argv)

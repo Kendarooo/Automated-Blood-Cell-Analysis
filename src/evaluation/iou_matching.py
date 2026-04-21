@@ -5,7 +5,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
+"""Estructuras de datos inmutables para representar las coordenadas en píxeles y 
+las etiquetas tanto de las anotaciones reales (ground truth) como de las predicciones."""
 @dataclass(frozen=True)
 class GroundTruthBox:
     """Ground-truth box and label in absolute pixel coordinates."""
@@ -29,7 +30,8 @@ class PredictedBox:
     classifier_label: str
     confidence: float
 
-
+"""Calcula matemáticamente la métrica de Intersección sobre Unión (IoU) para 
+cuantificar qué tanto se superponen la caja predicha y la real."""
 def compute_iou(box_a: GroundTruthBox, box_b: PredictedBox) -> float:
     """Compute intersection-over-union between two absolute-pixel boxes."""
     inter_x1 = max(box_a.x1, box_b.x1)
@@ -50,7 +52,8 @@ def compute_iou(box_a: GroundTruthBox, box_b: PredictedBox) -> float:
         return 0.0
     return inter_area / union_area
 
-
+"""Implementa un algoritmo voraz (greedy) para emparejar las predicciones con las 
+cajas reales maximizando el IoU, garantizando una asignación estricta de uno a uno."""
 def greedy_iou_match(
     ground_truth_boxes: list[tuple[int, GroundTruthBox]],
     predicted_boxes: list[tuple[int, PredictedBox]],
