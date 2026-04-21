@@ -17,7 +17,8 @@ os.environ.setdefault("ULTRALYTICS_CONFIG_DIR", str(Path(".ultralytics").resolve
 
 from src.detection.yolo_train import YOLOTrainer  # noqa: E402
 
-
+"""Configura los argumentos de la terminal específicos para el entrenamiento de 
+YOLO, permitiendo sobrescribir hiperparámetros clave como épocas o tasa de aprendizaje."""
 def build_parser() -> argparse.ArgumentParser:
     """Build the CLI parser for YOLO fine-tuning."""
     parser = argparse.ArgumentParser(description="Train YOLO on BCCD.")
@@ -37,7 +38,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--lr0", type=float, help="Override base learning rate.")
     return parser
 
-
+"""Ejecuta el ciclo de fine-tuning de YOLO, aplica las sobrescrituras de 
+hiperparámetros por CLI, registra las métricas en W&B y retorna un resumen del experimento."""
 def main(argv: list[str] | None = None) -> dict[str, Any]:
     """Execute one YOLO fine-tuning run and print a structured summary."""
     args = build_parser().parse_args(argv)

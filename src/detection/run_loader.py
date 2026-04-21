@@ -10,7 +10,8 @@ from typing import Any
 
 from ultralytics import YOLO
 
-
+"""Estructura inmutable que encapsula el modelo YOLO cargado junto con su 
+historial, configuración y rutas de ejecución."""
 @dataclass(frozen=True)
 class LoadedYOLOArtifacts:
     """Restored YOLO weights plus the exact config that produced them."""
@@ -21,7 +22,8 @@ class LoadedYOLOArtifacts:
     run_dir: Path
     best_weights: Path
 
-
+"""Restaura un modelo YOLO previamente entrenado desde el disco, cargando sus 
+mejores pesos y archivos de configuración sin necesidad de reentrenar."""
 def load_yolo_run(run_dir: str | Path) -> LoadedYOLOArtifacts:
     """Restore one persisted YOLO run from disk without retraining."""
     resolved_run_dir = Path(run_dir)
@@ -44,7 +46,8 @@ def load_yolo_run(run_dir: str | Path) -> LoadedYOLOArtifacts:
         best_weights=best_weights,
     )
 
-
+"""Funciones utilitarias para la lectura segura de metadatos en formato JSON y la 
+validación de existencia de archivos en el sistema."""
 def _read_json(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
