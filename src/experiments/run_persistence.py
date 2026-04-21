@@ -1,4 +1,5 @@
 """Local persistence utilities for FR-11 experiment runs."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 

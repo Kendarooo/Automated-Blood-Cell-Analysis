@@ -6,6 +6,7 @@ Aggressive hue shifts would destroy the chromatic differences between
 WBC (blue/purple nucleus), RBC (pink) and platelets (pale).
 Geometric transforms are safe and applied more aggressively.
 """
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 
@@ -45,9 +46,12 @@ class TrainTransforms:
                  Reads from cfg['augmentation'] sub-dictionary.
         """
         aug: dict[str, Any] = cfg["augmentation"]
+        detection_cfg = cfg.get("detection", {})
+        crop_h = int(detection_cfg.get("crop_height", 224))
+        crop_w = int(detection_cfg.get("crop_width", 224))
 
         self._transform = T.Compose([
-            T.Resize((224, 224)),
+            T.Resize((crop_h, crop_w)),
             # --- Geometric transforms (aggressive, safe for staining) ---
             T.RandomHorizontalFlip(
                 p=aug.get("horizontal_flip_p", 0.5)
@@ -106,9 +110,12 @@ class ValTransforms:
                  Reads normalize params from cfg['augmentation'].
         """
         aug: dict[str, Any] = cfg["augmentation"]
+        detection_cfg = cfg.get("detection", {})
+        crop_h = int(detection_cfg.get("crop_height", 224))
+        crop_w = int(detection_cfg.get("crop_width", 224))
 
         self._transform = T.Compose([
-            T.Resize((224, 224)),
+            T.Resize((crop_h, crop_w)),
             T.ToTensor(),
             T.Normalize(
                 mean=aug.get("normalize_mean", [0.485, 0.456, 0.406]),

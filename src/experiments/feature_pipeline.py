@@ -1,4 +1,5 @@
 """Feature preparation pipeline for FR-11 sweeps."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 

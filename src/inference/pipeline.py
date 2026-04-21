@@ -1,4 +1,5 @@
 """End-to-end inference pipeline for FR-13 using persisted artifacts."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 
@@ -12,7 +13,7 @@ import torch
 from src.data.transforms import ValTransforms
 from src.detection.yolo_infer import DetectionResult, YOLOInferencer
 from src.features.extractor import ResNet18Extractor
-from src.inference.artifact_loader import ArtifactLoader, ArtifactPaths, InferenceArtifacts
+from src.inference.artifact_loader import ArtifactLoader, ArtifactPaths
 from src.inference.cell_statistics import (
     CellCountAggregator,
     CellProportionCalculator,

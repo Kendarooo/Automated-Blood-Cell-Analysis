@@ -4,6 +4,7 @@ Critical design constraint: the normalizer must be fit EXCLUSIVELY on
 training data. Applying fit() on validation or test data would leak
 statistical information and invalidate generalization metrics (NFR-4).
 """
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 

@@ -1,4 +1,10 @@
+"""Configuration loading utilities for the BCCD pipeline."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
+
+from __future__ import annotations
+
 from pathlib import Path
+
 import yaml
 
 

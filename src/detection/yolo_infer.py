@@ -1,4 +1,5 @@
 """YOLO inference and bounding-box cell cropping for the BCCD pipeline."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -12,6 +13,7 @@ from ultralytics import YOLO
 # ---------------------------------------------------------------------------
 # Value objects  (no logic, just structured data)
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class BoundingBox:

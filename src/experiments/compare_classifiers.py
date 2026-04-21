@@ -1,4 +1,5 @@
 """Formal ANN vs SVM comparison utilities for FR-12."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 

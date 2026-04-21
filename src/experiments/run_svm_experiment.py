@@ -1,4 +1,5 @@
 """SVM experiment runner for FR-11 sweeps."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 
@@ -126,6 +127,11 @@ def run_svm_experiment(
             log_payload[f"val_recall_{class_name}"] = float(value)
 
         logger.log(log_payload, step=len(trained_runs) - 1 if trained_runs else None)
+        logger.log_confusion_matrix(
+            labels=list(prepared.metadata.class_names),
+            y_true=prepared.val.labels.tolist(),
+            preds=predictions.tolist(),
+        )
         logger.finish()
 
     from pathlib import Path

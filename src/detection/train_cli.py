@@ -1,4 +1,5 @@
 """CLI entrypoint for YOLO fine-tuning on the BCCD dataset."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 
@@ -14,7 +15,7 @@ from src.utils.wandb_logger import WandBLogger
 
 os.environ.setdefault("ULTRALYTICS_CONFIG_DIR", str(Path(".ultralytics").resolve()))
 
-from src.detection.yolo_train import YOLOTrainer
+from src.detection.yolo_train import YOLOTrainer  # noqa: E402
 
 
 def build_parser() -> argparse.ArgumentParser:

@@ -1,4 +1,5 @@
 """Dataset loaders for BCCD splits stored in YOLO detection format."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 

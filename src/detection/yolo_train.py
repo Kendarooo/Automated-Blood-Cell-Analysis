@@ -19,6 +19,7 @@ from ultralytics.utils.callbacks.wb import callbacks as yolo_wb_callbacks
 
 from src.utils.wandb_logger import WandBLogger
 
+
 class YOLOModelFactory:  # pylint: disable=too-few-public-methods
     """
     Open/Closed Principle: new model variants can be added without

@@ -1,4 +1,5 @@
 """Artificial Neural Network for multiclass blood-cell classification (FR-8)."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 

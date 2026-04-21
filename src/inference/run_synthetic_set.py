@@ -1,4 +1,5 @@
 """Batch inference over a secondary synthetic image set for FR-14-style reporting."""
+# Author: Kendall Madrigal, Alexandra Alfaro / Claude Sonnet 4.6
 
 from __future__ import annotations
 
