@@ -20,9 +20,9 @@ Verificar configuración antes de correr:
 cat configs/config.yaml   # ajustar rutas si el entorno difiere
 ```
 
-> **Nota:** `detection.conf_threshold` está en `0.5` pero la calibración
-> encontró que `0.4` maximiza F1. Cambiar antes de inferencia si se quiere
-> reproducir los resultados del reporte.
+> **Nota:** la calibración encontró que `detection.conf_threshold = 0.4`
+> maximiza F1. La configuración actual ya utiliza ese valor para reproducir
+> los resultados documentados.
 
 ---
 
