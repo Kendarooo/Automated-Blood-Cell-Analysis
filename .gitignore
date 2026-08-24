@@ -5,5 +5,8 @@ __pycache__/
 .codex
 outputs/
 wandb/
+*.log
+.mplconfig/
+.torch-cache/
 data/bccd/
 data/synthetic_test/

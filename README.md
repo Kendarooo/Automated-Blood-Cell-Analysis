@@ -1,79 +1,149 @@
-[![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-2e0aaae1b6195c2367325f4f02e2d04e9abb55f0b24a779b69b11b9e10269abc.svg)](https://classroom.github.com/online_ide?assignment_repo_id=23400893&assignment_repo_type=AssignmentRepo)
-# EL 5857 Aprendizaje Automático - Tarea 2
-## Datos, aprendizaje supervisado y una aplicación médica
+# Automated Blood Cell Analysis
 
-Bienvenidos al repositorio base para la Tarea 2 del curso. 
+End-to-end machine learning pipeline for automated analysis of peripheral blood smear images. The project detects, characterizes, and classifies three major blood-cell categories from the BCCD dataset: **red blood cells (RBC)**, **white blood cells (WBC)**, and **platelets**.
 
-### Resumen de la Tarea
+The system combines object detection, deep feature extraction, supervised classification, experiment tracking, and statistical inference in a modular Python pipeline.
 
-El objetivo principal de esta tarea es construir el pipeline fundacional de un hemograma automatizado a partir de imágenes de frotis de sangre periférica. Deberán implementar un flujo de trabajo de extremo a extremo que logre aislar, caracterizar y clasificar los tres tipos principales de elementos celulares: glóbulos blancos (WBC), glóbulos rojos (RBC) y plaquetas.
+> Academic project developed for **EL5857 Aprendizaje Automático** at the Tecnológico de Costa Rica (TEC). This public repository preserves the original development history while presenting the project as a portfolio artifact.
 
-El sistema se compone de las siguientes etapas principales:
-1. **Detección:** Uso de un modelo pre-entrenado ultrarrápido (YOLO26s) con ajuste fino para localizar las células.
-2. **Extracción y aumento:** Aislamiento de las células, aplicación de aumento de datos en línea (data augmentation) para mitigar el sobreajuste, y extracción de características utilizando una red convolucional profunda congelada (ej. ResNet18).
-3. **Reducción dimensional:** Aplicación de mecanismos robustos (selección univariada o regularización extrema) para manejar la alta dimensionalidad. **El uso de PCA está estrictamente prohibido**.
-4. **Clasificación:** Implementación y comparación de dos enfoques:
-   * Una red neuronal artificial (ANN) programada puramente en PyTorch, controlando explícitamente el ciclo de optimización y los grafos computacionales.
-   * Una Máquina de Soporte Vectorial (SVM) explorando distintos kernels.
-5. **Inferencia clínica:** Análisis estadístico final para contrastar proporciones celulares y emitir alertas médicas basadas en valores $p$.
+## Pipeline
 
-Recuerden que es obligatorio rastrear todos sus experimentos y barridos de hiperparámetros utilizando Weights & Biases (W&B). Todo el código debe adherirse a los principios SOLID y buenas prácticas de ingeniería de software (TDD, uso de linters, modularidad).
+1. **Cell detection — YOLO26s**
+   - Fine-tunes a pretrained YOLO26s detector on BCCD images.
+   - Localizes RBC, WBC, and platelets.
+   - Supports confidence-threshold calibration and IoU-based evaluation.
 
----
+2. **Cell extraction and augmentation**
+   - Crops detected cells to a uniform `224 x 224` representation.
+   - Applies geometric, photometric, and noise augmentations to reduce overfitting.
 
-### Herramienta Incluida: Explorador del Conjunto de Datos
+3. **Deep feature extraction — ResNet18**
+   - Uses a frozen pretrained ResNet18 as a feature extractor.
+   - The default configuration truncates the network at `layer3`.
+   - Features are normalized before classifier training.
 
-Para facilitar el arranque del proyecto, este repositorio incluye un script auxiliar llamado `dataset_viewer.py`. Esta herramienta se encarga de verificar la existencia del conjunto de datos BCCD, descargarlo si es necesario, y proveer una interfaz gráfica ligera para explorar las imágenes y sus anotaciones.
+4. **Supervised classification**
+   - **ANN:** custom PyTorch neural network with an explicit training loop.
+   - **SVM:** scikit-learn implementation with configurable kernels and hyperparameters.
+   - Hyperparameter experiments can be tracked with Weights & Biases (W&B).
 
-#### Requisitos previos
-Asegúrense de tener instaladas las dependencias gráficas básicas:
-```bash
-pip install matplotlib pillow
+5. **Statistical inference**
+   - Builds reference cell proportions from the training split.
+   - Compares predictions against the baseline using statistical hypothesis testing.
+   - Produces an alert when the configured significance criterion is met.
+
+## Key result
+
+Detector confidence calibration found a best threshold of **0.4**, reaching **F1 = 0.7958** in the documented evaluation workflow.
+
+The repository also includes tooling for label comparison, confusion matrices, per-image evaluation, ANN/SVM experiments, and end-to-end inference. Generated experiment artifacts are stored under `outputs/` and are intentionally excluded from version control.
+
+## Technology stack
+
+- Python 3.12+
+- PyTorch / Torchvision
+- Ultralytics YOLO
+- scikit-learn
+- OpenCV
+- NumPy / Pandas / SciPy
+- Weights & Biases
+- PyTest
+- Ruff
+
+## Repository structure
+
+```text
+.
+├── configs/                 # Pipeline and sweep configuration
+├── data/                    # BCCD dataset metadata/data
+├── src/
+│   ├── data/                # Dataset loading
+│   ├── detection/           # YOLO training and inference
+│   ├── evaluation/          # Threshold calibration and label evaluation
+│   ├── experiments/         # ANN/SVM experiment orchestration
+│   ├── features/            # ResNet18 feature extraction and normalization
+│   ├── inference/           # End-to-end inference and statistical analysis
+│   ├── models/              # ANN and SVM models
+│   ├── training/            # Training utilities
+│   └── utils/               # Shared utilities and W&B integration
+├── tests/                   # Unit/integration tests and pipeline benchmark
+├── dataset_view.py          # BCCD dataset explorer
+├── RUNBOOK.md               # Full reproducibility workflow
+├── requirements.txt
+└── T2.pdf                   # Original academic assignment specification
 ```
 
+## Setup
 
-## Crear y activar entorno virtual
-
-Desde la raíz del repositorio:
+Create and activate a virtual environment:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-```
-
-## Actualizar pip:
-
-```bash
 python -m pip install --upgrade pip
-```
-
-## Instalar dependencias
-```bash
 pip install -r requirements.txt
 ```
-## 5. Configurar Weights & Biases
- 
+
+If experiment tracking is enabled in `configs/config.yaml`, authenticate with W&B:
+
 ```bash
 wandb login
 ```
- 
-Ingresá tu API key cuando se solicite. La podés encontrar en [https://wandb.ai/authorize](https://wandb.ai/authorize).
 
-## 6. Revisar la configuración
- 
-Antes de correr cualquier etapa, revisá `configs/config.yaml` y ajustá las rutas y hiperparámetros según tu entorno. Los valores por defecto funcionan si respetás la estructura de carpetas anterior.
+Review the configuration before running the pipeline:
 
-## 7. Correr los tests
- 
+```bash
+cat configs/config.yaml
+```
+
+## Explore the dataset
+
+The repository includes `dataset_view.py`, a lightweight tool for inspecting the BCCD images and annotations and preparing the dataset when needed.
+
+```bash
+python dataset_view.py
+```
+
+## Tests
+
+Run the complete test suite:
+
 ```bash
 pytest tests/ -v
 ```
- 
-Para correr solo un módulo específico:
- 
+
+Examples of focused tests:
+
 ```bash
 pytest tests/test_extractor.py -v
 pytest tests/test_transforms.py -v
 pytest tests/test_ann_training.py -v
-pytest tests/test_inference.py -v
+pytest tests/test_statistical_inference.py -v
 ```
+
+## Run the pipeline
+
+Train the complete detector → feature extraction → ANN → SVM → baseline workflow:
+
+```bash
+python main.py --stage all --config configs/config.yaml
+```
+
+Individual stages can also be executed separately. The complete command sequence, expected artifacts, inference workflow, and final evaluation procedure are documented in [`RUNBOOK.md`](RUNBOOK.md).
+
+## Configuration highlights
+
+The default configuration uses:
+
+- YOLO input size: `320`
+- Detection confidence threshold: `0.4`
+- Cell crop size: `224 x 224`
+- ResNet18 truncation: `layer3`
+- ANN hidden layers: `[128, 64]`
+- ANN dropout: `0.6`
+- SVM default kernel: `linear`
+- Statistical significance level: `alpha = 0.05`
+
+## Academic context
+
+This project originated as **Tarea 2 — Datos, aprendizaje supervisado y una aplicación médica** for EL5857. The original assignment specification is retained as `T2.pdf` for context. The implementation in this repository extends the provided starting point into a modular training, evaluation, and inference pipeline with automated tests and experiment tracking.
